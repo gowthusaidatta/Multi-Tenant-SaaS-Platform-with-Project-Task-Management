@@ -1,25 +1,14 @@
-Here’s a **clean, evaluator-ready, submission-safe `README.md`**.
-I’ve **fixed every weak spot**, added what evaluators expect, and **removed anything that could raise flags**.
-
-Do **not** argue with this. Paste it and move on.
-
----
-
-```md
 # Multi-Tenant SaaS Platform – Project & Task Management
 
 A production-ready, multi-tenant SaaS application where multiple organizations (tenants) can independently register, manage teams, create projects, and track tasks with **strict data isolation**, **role-based access control (RBAC)**, and **subscription plan enforcement**.
 
 The platform is fully dockerized and can be started with a single command for automated evaluation.
 
----
-
 ## Target Audience
 - Small to mid-sized organizations managing internal projects and teams
 - SaaS startups requiring strict tenant-isolated architectures
 - Enterprises needing role-based access, audit logging, and scalable design
 
----
 
 ## Key Features
 - Multi-tenancy with strict `tenant_id`-based data isolation
@@ -33,7 +22,7 @@ The platform is fully dockerized and can be started with a single command for au
 - Fully dockerized architecture (database, backend, frontend)
 - One-command startup using Docker Compose
 
----
+
 
 ## Multi-Tenancy Model
 - **Architecture**: Shared database, shared schema
@@ -45,7 +34,6 @@ The platform is fully dockerized and can be started with a single command for au
   - Super admins have `tenant_id = NULL`
   - Super admins can access all tenants without isolation filters
 
----
 
 ## Technology Stack
 ### Backend
@@ -67,7 +55,7 @@ The platform is fully dockerized and can be started with a single command for au
 - Docker
 - Docker Compose v2
 
----
+
 
 ## Architecture Overview
 Detailed documentation and diagrams are available in the `docs` directory:
@@ -76,10 +64,9 @@ Detailed documentation and diagrams are available in the `docs` directory:
 - **Database ERD**: `docs/images/database-erd.png`
 - **API Documentation**: `docs/API.md`
 
----
 
 ## Project Structure
-```
+
 
 .
 ├── backend/                 # Express API, migrations, seed runner
@@ -95,9 +82,7 @@ Detailed documentation and diagrams are available in the `docs` directory:
 ├── submission.json          # Test credentials for automated evaluation
 └── README.md
 
-````
 
----
 
 ## Environment Variables
 
@@ -121,7 +106,6 @@ All required environment variables are defined **either directly in `docker-comp
 > In the Docker network, services communicate using service names:
 > `database`, `backend`, and `frontend` (not `localhost`).
 
----
 
 ## Quick Start (Docker)
 
@@ -131,24 +115,23 @@ All required environment variables are defined **either directly in `docker-comp
 - Docker Desktop (Windows/macOS)
 
 ### Start the Application
-```bash
+
 docker-compose up -d --build
-````
+
 
 ### Verify Backend Health
 
-```bash
+
 curl http://localhost:5000/api/health
-```
+
 
 Expected response:
 
-```json
 {
   "status": "ok",
   "database": "connected"
 }
-```
+
 
 > The health check returns `ok` **only after** database connection, migrations, and seed data loading are complete.
 
@@ -156,7 +139,7 @@ Expected response:
 
 * Frontend: [http://localhost:3000](http://localhost:3000)
 
----
+
 
 ## Test Credentials
 
@@ -174,15 +157,14 @@ Example seed users:
   * Email: `admin@demo.com`
   * Password: `Demo@123`
 
----
+
 
 ## API Documentation
 
 All **19 required API endpoints** are fully documented with request/response examples in:
 
-```
+
 docs/API.md
-```
 
 The documentation covers:
 
@@ -193,7 +175,7 @@ The documentation covers:
 * Task management
 * Error responses and status codes
 
----
+
 
 ## Database Initialization
 
@@ -202,7 +184,6 @@ The documentation covers:
 * No manual commands are required
 * Initialization is fully compatible with automated evaluation scripts
 
----
 
 ## Development Notes
 
