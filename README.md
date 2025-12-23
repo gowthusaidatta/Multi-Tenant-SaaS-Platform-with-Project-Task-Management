@@ -221,9 +221,48 @@ The demo video covers:
 - Code walkthrough
 
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[API Documentation](docs/API.md)** - All 19 API endpoints with examples
+- **[Architecture](docs/architecture.md)** - System architecture and database design
+- **[PRD](docs/PRD.md)** - Product requirements and user personas
+- **[Research](docs/research.md)** - Multi-tenancy analysis and tech stack justification
+- **[Technical Spec](docs/technical-spec.md)** - Project structure and setup guide
+- **[Security](docs/SECURITY.md)** - Security considerations and best practices
+- **[Deployment](docs/DEPLOYMENT.md)** - Production deployment guide
+- **[Testing](docs/TESTING.md)** - Testing strategies and examples
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[FAQ](docs/FAQ.md)** - Frequently asked questions
+- **[Performance](docs/PERFORMANCE.md)** - Performance optimization guide
+
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+## Acknowledgments
+
+- Built as part of the Partnr GPP (Global Practical Program)
+- Special thanks to the open-source community for the amazing tools and libraries
+
+
 ## Development Notes
 
 * Repository contains 30+ meaningful commits showing incremental development
 * All authorization, tenant isolation, and subscription limits are enforced server-side
 * Frontend routes are protected and role-aware
 * No production secrets are used (test/development values only)
+
+---
+
+**Repository**: https://github.com/gowthusaidatta/Multi-Tenant-SaaS-Platform-with-Project-Task-Management
+
+**Author**: V V Satya Sai Datta Manikanta Gowthu
