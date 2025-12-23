@@ -1,10 +1,32 @@
 # Multi-Tenant SaaS Platform – Project & Task Management
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Node.js](https://img.shields.io/badge/node.js-20-green.svg)
+![React](https://img.shields.io/badge/react-18-blue.svg)
+![PostgreSQL](https://img.shields.io/badge/postgresql-15-blue.svg)
+![Docker](https://img.shields.io/badge/docker-compose-blue.svg)
+
 A production-ready, multi-tenant SaaS application where multiple organizations (tenants) can independently register, manage teams, create projects, and track tasks with **strict data isolation**, **role-based access control (RBAC)**, and **subscription plan enforcement**.
 
 The platform is fully dockerized and can be started with a single command for automated evaluation.
 
+## 📋 Table of Contents
+
+- [Target Audience](#target-audience)
+- [Key Features](#key-features)
+- [Multi-Tenancy Model](#multi-tenancy-model)
+- [Technology Stack](#technology-stack)
+- [Architecture Overview](#architecture-overview)
+- [Quick Start](#quick-start-docker)
+- [Test Credentials](#test-credentials)
+- [API Documentation](#api-documentation)
+- [Demo Video](#demo-video)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Target Audience
+
 - Small to mid-sized organizations managing internal projects and teams
 - SaaS startups requiring strict tenant-isolated architectures
 - Enterprises needing role-based access, audit logging, and scalable design
