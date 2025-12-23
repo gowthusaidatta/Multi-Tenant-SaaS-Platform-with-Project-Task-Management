@@ -1,0 +1,33 @@
+node_modules
+dist
+coverage
+*.log
+.env.local
+.DS_Store
+
+# Backend specific
+backend/node_modules/
+backend/dist/
+
+# Frontend specific
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Docker
+.docker/
+
+# Temporary files
+*.tmp
+*.temp
