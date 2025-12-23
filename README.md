@@ -185,6 +185,20 @@ The documentation covers:
 * Initialization is fully compatible with automated evaluation scripts
 
 
+## Demo Video
+
+🎥 **Video Demonstration**: [Watch on YouTube](YOUR_YOUTUBE_LINK_HERE)
+
+The demo video covers:
+- Architecture walkthrough and multi-tenancy explanation
+- Running application via docker-compose
+- Tenant registration and login
+- User management and role-based access
+- Project and task management
+- Data isolation demonstration
+- Code walkthrough
+
+
 ## Development Notes
 
 * Repository contains 30+ meaningful commits showing incremental development
