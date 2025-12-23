@@ -31,21 +31,23 @@ export default function Dashboard() {
   }, [user]);
 
   return (
-    <div style={{ padding: 16 }}>
+    <div>
       <h2>Dashboard</h2>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:12 }}>
+      <div className="grid-4">
         <Card title="Total Projects" value={stats.totalProjects} />
         <Card title="Total Tasks" value={stats.totalTasks} />
         <Card title="Completed" value={stats.completedTasks} />
         <Card title="Pending" value={stats.pendingTasks} />
       </div>
-      <h3 style={{ marginTop: 24 }}>Recent Projects</h3>
-      <ul>
-        {recent.map(p => <li key={p.id}>{p.name} • {p.status} • tasks: {p.taskCount}</li>)}
+      <div className="spacer"></div>
+      <h3>Recent Projects</h3>
+      <ul className="item-list">
+        {recent.map(p => <li key={p.id}><strong>{p.name}</strong> <span className="badge">{p.status}</span> <span className="text-muted">• tasks: {p.taskCount}</span></li>)}
       </ul>
+      <div className="spacer"></div>
       <h3>My Tasks</h3>
-      <ul>
-        {myTasks.map(t => <li key={t.id}>{t.title} • {t.priority} • {t.status}</li>)}
+      <ul className="item-list">
+        {myTasks.map(t => <li key={t.id}><strong>{t.title}</strong> <span className="badge">{t.priority}</span> <span className="badge">{t.status}</span></li>)}
       </ul>
     </div>
   );
@@ -53,9 +55,9 @@ export default function Dashboard() {
 
 function Card({ title, value }) {
   return (
-    <div style={{ border:'1px solid #eee', padding:16, borderRadius:8 }}>
-      <div style={{ color:'#777' }}>{title}</div>
-      <div style={{ fontSize:24, fontWeight:600 }}>{value}</div>
+    <div className="card">
+      <div className="card-title">{title}</div>
+      <div className="card-value">{value}</div>
     </div>
   );
 }

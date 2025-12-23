@@ -24,21 +24,21 @@ export default function Users() {
   const remove = async (id) => { if (confirm('Delete user?')) { await UsersAPI.remove(id); await load(); } };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div>
       <h2>Users</h2>
-      <div style={{ display:'flex', gap:8, margin:'8px 0' }}>
-        <input placeholder="Search" value={search} onChange={e=>setSearch(e.target.value)} />
-        <select value={role} onChange={e=>setRole(e.target.value)}>
+      <div className="stack" style={{ margin:'8px 0' }}>
+        <input className="input" placeholder="Search" value={search} onChange={e=>setSearch(e.target.value)} />
+        <select className="select" value={role} onChange={e=>setRole(e.target.value)}>
           <option value="">All</option>
           <option value="user">User</option>
           <option value="tenant_admin">Tenant Admin</option>
         </select>
-        <button onClick={load}>Filter</button>
-        <button style={{ marginLeft:'auto' }} onClick={()=>setShowModal(true)}>Add User</button>
+        <button className="btn" onClick={load}>Filter</button>
+        <button className="btn btn-primary right" onClick={()=>setShowModal(true)}>Add User</button>
       </div>
-      <table width="100%" cellPadding="6" style={{ borderCollapse:'collapse' }}>
+      <table className="table">
         <thead>
-          <tr style={{ textAlign:'left', borderBottom:'1px solid #eee' }}>
+          <tr>
             <th>Full Name</th>
             <th>Email</th>
             <th>Role</th>
@@ -48,34 +48,34 @@ export default function Users() {
         </thead>
         <tbody>
           {items.map(u => (
-            <tr key={u.id} style={{ borderBottom:'1px solid #f3f3f3' }}>
+            <tr key={u.id}>
               <td>{u.fullName}</td>
               <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td>{u.isActive ? 'Active' : 'Inactive'}</td>
-              <td><button onClick={()=>remove(u.id)}>Delete</button></td>
+              <td><span className="badge">{u.role}</span></td>
+              <td>{u.isActive ? <span className="badge badge-success">Active</span> : <span className="badge">Inactive</span>}</td>
+              <td><button className="btn btn-danger" onClick={()=>remove(u.id)}>Delete</button></td>
             </tr>
           ))}
         </tbody>
       </table>
       {showModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.3)' }}>
-          <div style={{ background:'#fff', width:420, margin:'10% auto', padding:16, borderRadius:8 }}>
-            <h3>Add User</h3>
+        <div className="modal-backdrop">
+          <div className="modal">
+            <div className="modal-header"><h3>Add User</h3><button className="btn" onClick={()=>setShowModal(false)}>✕</button></div>
             <label>Full Name</label>
-            <input value={form.fullName} onChange={e=>setForm({...form, fullName:e.target.value})} />
+            <input className="input" value={form.fullName} onChange={e=>setForm({...form, fullName:e.target.value})} />
             <label>Email</label>
-            <input type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
+            <input className="input" type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
             <label>Password</label>
-            <input type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
+            <input className="input" type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
             <label>Role</label>
-            <select value={form.role} onChange={e=>setForm({...form, role:e.target.value})}>
+            <select className="select" value={form.role} onChange={e=>setForm({...form, role:e.target.value})}>
               <option value="user">User</option>
               <option value="tenant_admin">Tenant Admin</option>
             </select>
-            <div style={{ marginTop: 12, display:'flex', gap:8 }}>
-              <button onClick={()=>setShowModal(false)}>Cancel</button>
-              <button onClick={add}>Save</button>
+            <div className="modal-actions">
+              <button className="btn" onClick={()=>setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={add}>Save</button>
             </div>
           </div>
         </div>

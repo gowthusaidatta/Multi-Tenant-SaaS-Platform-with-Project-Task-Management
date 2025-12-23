@@ -9,7 +9,7 @@ export const config = {
     port: parseInt(process.env.DB_PORT || '5432', 10),
     database: process.env.DB_NAME || 'saas_db',
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
+    password: process.env.DB_PASSWORD || '1235',
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'change_me_in_prod_please',

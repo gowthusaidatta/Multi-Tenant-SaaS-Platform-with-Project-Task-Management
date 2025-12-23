@@ -13,28 +13,28 @@ function NavBar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   return (
-    <div style={{ display: 'flex', padding: 12, gap: 12, borderBottom: '1px solid #eee' }}>
-      <strong style={{ marginRight: 16 }}>GPP SaaS</strong>
+    <div className="navbar">
+      <div className="navbar-brand">GPP <span className="dot">●</span> SaaS</div>
       {user && (
-        <>
+        <div className="navbar-links">
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/projects">Projects</Link>
           {['tenant_admin','super_admin'].includes(user.role) && <Link to="/users">Users</Link>}
-        </>
+        </div>
       )}
-      <span style={{ marginLeft: 'auto' }}>
+      <div className="navbar-right">
         {user ? (
           <>
-            <span style={{ marginRight: 12 }}>{user.fullName} ({user.role})</span>
-            <button onClick={async () => { await logout(); navigate('/login'); }}>Logout</button>
+            <span className="text-muted">{user.fullName} ({user.role})</span>
+            <button className="btn" onClick={async () => { await logout(); navigate('/login'); }}>Logout</button>
           </>
         ) : (
-          <>
-            <Link to="/login">Login</Link>
-            <Link to="/register" style={{ marginLeft: 8 }}>Register</Link>
-          </>
+          <div className="stack">
+            <Link className="btn" to="/login">Login</Link>
+            <Link className="btn btn-primary" to="/register">Register</Link>
+          </div>
         )}
-      </span>
+      </div>
     </div>
   );
 }
@@ -43,15 +43,18 @@ export default function App() {
   return (
     <AuthProvider>
       <NavBar />
-      <Routes>
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-        <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-        <Route path="*" element={<Login />} />
-      </Routes>
+      <div className="container">
+        <Routes>
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+          <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+        <div className="footer">© 2025 GPP Multi‑Tenant SaaS Platform</div>
+      </div>
     </AuthProvider>
   );
 }

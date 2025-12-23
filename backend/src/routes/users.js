@@ -3,7 +3,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { ok, created, forbidden, conflict, notFound, badRequest } from '../utils/responses.js';
 import { query } from '../db.js';
 import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { logAction } from '../utils/logger.js';
 
 const router = Router();

@@ -23,51 +23,51 @@ export default function Projects() {
   const remove = async (id) => { if (confirm('Delete project?')) { await ProjectsAPI.remove(id); await load(); } };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div>
       <h2>Projects</h2>
-      <div style={{ display:'flex', gap:8, margin:'8px 0' }}>
-        <input placeholder="Search" value={search} onChange={e=>setSearch(e.target.value)} />
-        <select value={status} onChange={e=>setStatus(e.target.value)}>
+      <div className="stack" style={{ margin:'8px 0' }}>
+        <input className="input" placeholder="Search" value={search} onChange={e=>setSearch(e.target.value)} />
+        <select className="select" value={status} onChange={e=>setStatus(e.target.value)}>
           <option value="">All</option>
           <option value="active">Active</option>
           <option value="archived">Archived</option>
           <option value="completed">Completed</option>
         </select>
-        <button onClick={load}>Filter</button>
-        <button style={{ marginLeft: 'auto' }} onClick={()=>setShowModal(true)}>Create New Project</button>
+        <button className="btn" onClick={load}>Filter</button>
+        <button className="btn btn-primary right" onClick={()=>setShowModal(true)}>Create New Project</button>
       </div>
-      <ul>
+      <ul className="item-list">
         {items.map(p => (
-          <li key={p.id} style={{ padding:8, borderBottom:'1px solid #eee', display:'flex' }}>
+          <li key={p.id}>
             <div>
-              <div style={{ fontWeight:600 }}>{p.name}</div>
-              <div style={{ color:'#777' }}>{p.description}</div>
-              <small>Status: {p.status} • Tasks: {p.taskCount} • By: {p.createdBy.fullName}</small>
+              <div style={{ fontWeight:600 }}>{p.name} <span className="badge">{p.status}</span></div>
+              <div className="text-muted">{p.description}</div>
+              <small className="text-muted">Tasks: {p.taskCount} • By: {p.createdBy.fullName}</small>
             </div>
-            <span style={{ marginLeft:'auto', display:'flex', gap:6 }}>
-              <Link to={`/projects/${p.id}`}><button>View</button></Link>
-              <button onClick={()=>remove(p.id)}>Delete</button>
+            <span className="right stack">
+              <Link to={`/projects/${p.id}`}><button className="btn">View</button></Link>
+              <button className="btn btn-danger" onClick={()=>remove(p.id)}>Delete</button>
             </span>
           </li>
         ))}
       </ul>
       {showModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.3)' }}>
-          <div style={{ background:'#fff', width:400, margin:'10% auto', padding:16, borderRadius:8 }}>
-            <h3>Create Project</h3>
+        <div className="modal-backdrop">
+          <div className="modal">
+            <div className="modal-header"><h3>Create Project</h3><button className="btn" onClick={()=>setShowModal(false)}>✕</button></div>
             <label>Name</label>
-            <input value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />
+            <input className="input" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />
             <label>Description</label>
-            <textarea value={form.description} onChange={e=>setForm({...form, description:e.target.value})} />
+            <textarea className="input" value={form.description} onChange={e=>setForm({...form, description:e.target.value})} />
             <label>Status</label>
-            <select value={form.status} onChange={e=>setForm({...form, status:e.target.value})}>
+            <select className="select" value={form.status} onChange={e=>setForm({...form, status:e.target.value})}>
               <option value="active">Active</option>
               <option value="archived">Archived</option>
               <option value="completed">Completed</option>
             </select>
-            <div style={{ marginTop: 12, display:'flex', gap:8 }}>
-              <button onClick={()=>setShowModal(false)}>Cancel</button>
-              <button onClick={create}>Save</button>
+            <div className="modal-actions">
+              <button className="btn" onClick={()=>setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={create}>Save</button>
             </div>
           </div>
         </div>
