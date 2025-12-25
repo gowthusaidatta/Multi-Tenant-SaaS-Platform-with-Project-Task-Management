@@ -1,25 +1,32 @@
 # Multi-Tenant SaaS Platform - Backend Dockerfile
-# Multi-stage build for optimized production deployment
+# Production-ready Node.js API server with PostgreSQL support
 
-# Base stage: Node.js 20 Alpine for smaller image size
-FROM node:20-alpine AS base
+FROM node:20-alpine
+
 WORKDIR /app
 
-# Install dependencies first (cached layer)
-COPY package.json ./
-RUN npm install --production
+# Install system dependencies including curl for health checks
+RUN apk add --no-cache curl
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install --omit=dev
 
 # Copy application code
 COPY src ./src
 COPY migrations ./migrations
-COPY seeds ./seeds
 
-# Install curl for Docker health checks
-RUN apk add --no-cache curl
+# Create seeds directory if it doesn't exist
+RUN mkdir -p ./seeds
 
-# Expose port 5000 for API server
+# Expose port 5000
 EXPOSE 5000
 
-# Start application
-# index.js automatically runs migrations and seeds on startup
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:5000/api/health || exit 1
+
+# Start the application
 CMD ["node", "src/index.js"]
