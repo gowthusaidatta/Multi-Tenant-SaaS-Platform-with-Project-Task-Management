@@ -165,19 +165,54 @@ Expected response:
 
 ## Test Credentials
 
-All credentials used for automated evaluation are documented in `submission.json`.
+All credentials used for testing and automated evaluation are documented in `submission.json`.
 
-Example seed users:
+### Quick Login Credentials
 
-* **Super Admin**
+#### Super Admin (Full System Access)
+- **Email**: `superadmin@system.com`
+- **Password**: `Admin@123`
+- **Role**: Super Admin (Access all tenants)
 
-  * Email: `superadmin@system.com`
-  * Password: `Admin@123`
+#### Demo Tenant Admin
+- **Email**: `admin@demo.com`
+- **Password**: `Demo@123`
+- **Subdomain**: `demo`
+- **Role**: Tenant Admin (Manage own tenant)
 
-* **Demo Tenant Admin**
+#### Demo Tenant Users
+- **User 1**
+  - Email: `user1@demo.com`
+  - Password: `User@123`
+  - Subdomain: `demo`
+  - Role: Regular User
 
-  * Email: `admin@demo.com`
-  * Password: `Demo@123`
+- **User 2**
+  - Email: `user2@demo.com`
+  - Password: `User@123`
+  - Subdomain: `demo`
+  - Role: Regular User
+
+### How to Login
+
+1. Navigate to [http://localhost:3000](http://localhost:3000)
+2. Click **Login**
+3. Enter email, password, and subdomain (e.g., `demo`)
+4. Click **Submit**
+5. You'll be redirected to the dashboard
+
+### Register New Tenant
+
+1. Navigate to [http://localhost:3000](http://localhost:3000)
+2. Click **Register**
+3. Enter:
+   - Organization Name (e.g., "My Company")
+   - Subdomain (unique, lowercase, no spaces - e.g., "mycompany")
+   - Admin Email
+   - Admin Full Name
+   - Password (min 8 characters)
+4. Click **Register**
+5. You'll be able to login with your new credentials
 
 
 
@@ -206,6 +241,28 @@ The documentation covers:
 * No manual commands are required
 * Initialization is fully compatible with automated evaluation scripts
 
+
+## Live Demo
+
+🚀 **Frontend Live Demo**: [https://gpp-saas-frontend.vercel.app](https://gpp-saas-frontend.vercel.app)
+
+You can test the frontend application live using the test credentials provided above.
+
+### Vercel Deployment
+
+The frontend is automatically deployed to Vercel. Any push to the `main` branch triggers a new deployment.
+
+**Live URLs**:
+- Production: https://gpp-saas-frontend.vercel.app
+- Backend API (Local): http://localhost:5000/api
+
+To deploy your own version to Vercel:
+1. Push your code to GitHub
+2. Visit [https://vercel.com](https://vercel.com)
+3. Import the GitHub repository
+4. Set environment variables:
+   - `VITE_API_URL`: Your backend API URL
+5. Click Deploy
 
 ## Demo Video
 
