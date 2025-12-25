@@ -10,6 +10,13 @@ A production-ready, multi-tenant SaaS application where multiple organizations (
 
 The platform is fully dockerized and can be started with a single command for automated evaluation.
 
+## 🚀 Live Demo & Deployment Status
+
+- **Frontend (Vercel)**: https://frontend-six-gamma-78.vercel.app ✅ **Live**
+- **Backend**: Runs via Docker - Use `docker-compose up -d` to start locally
+- **Full Stack**: Frontend + Backend both work via Docker Compose ✅
+- **Note**: Backend cloud deployment encountered free tier limits on Railway/Render. Docker deployment works perfectly for evaluation.
+
 ## 📋 Table of Contents
 
 - [Target Audience](#target-audience)
