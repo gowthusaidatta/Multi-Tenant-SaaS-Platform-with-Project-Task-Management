@@ -14,6 +14,8 @@ export default function Login() {
       await login(form);
       navigate('/dashboard');
     } catch (e) {
+      console.error('Login error:', e);
+      console.error('Error response:', e.response?.data);
       setError('Invalid credentials');
     } finally { setLoading(false); }
   };

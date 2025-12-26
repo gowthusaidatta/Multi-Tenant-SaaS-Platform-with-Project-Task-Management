@@ -1,22 +1,24 @@
 # Multi-Tenant SaaS Platform - Frontend Dockerfile
-# Development server configuration using Vite
+# Production build with optimized static serving
 
-# Base image: Node.js 20 Alpine for smaller size
-FROM node:20-alpine
+# Build stage
+FROM node:20-alpine as builder
 WORKDIR /app
-
-# Install dependencies first (cached layer)
 COPY package.json ./
 RUN npm install
-
-# Copy application code
-COPY index.html ./
-COPY vite.config.js ./
+COPY index.html vite.config.js ./
+COPY .env.development ./
 COPY src ./src
+RUN npm run build
 
-# Expose port 3000 for Vite dev server
+# Runtime stage - use lightweight httpserver
+FROM node:20-alpine
+WORKDIR /app
+RUN npm install -g serve
+COPY --from=builder /app/dist ./dist
+
+# Expose port 3000
 EXPOSE 3000
 
-# Start Vite development server
-# --host 0.0.0.0 allows external connections (required in Docker)
-CMD ["npm", "run", "dev"]
+# Serve built files without file watching
+CMD ["serve", "-s", "dist", "-l", "3000"]

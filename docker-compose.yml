@@ -60,9 +60,9 @@ services:
     ports:
       - "3000:3000"  # Fixed port mapping (external:internal)
     environment:
-      # API URL uses service name 'backend', not 'localhost'
-      VITE_API_URL: http://backend:5000/api
-      REACT_APP_API_URL: http://backend:5000/api
+      # API URL for browser access from host machine
+      VITE_API_URL: http://localhost:5000/api
+      REACT_APP_API_URL: http://localhost:5000/api
     depends_on:
       backend:
         condition: service_healthy  # Wait for backend to be ready

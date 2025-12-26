@@ -12,8 +12,10 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await AuthAPI.me();
       setUser(data.data);
-    } catch {
+    } catch (e) {
+      console.error('Auth refresh failed:', e.message);
       setUser(null);
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }

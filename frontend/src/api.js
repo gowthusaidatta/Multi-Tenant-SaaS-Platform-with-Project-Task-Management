@@ -3,6 +3,8 @@ import axios from 'axios';
 // Vite exposes env via import.meta.env; avoid process.env in client code
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+console.log('API Base URL:', baseURL);
+
 export const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config) => {
@@ -16,7 +18,10 @@ api.interceptors.response.use(
   (err) => {
     if (err.response && err.response.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Only redirect if not already on login page to prevent infinite loops
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }
