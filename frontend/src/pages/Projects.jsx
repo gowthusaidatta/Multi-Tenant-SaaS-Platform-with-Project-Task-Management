@@ -13,19 +13,44 @@ export default function Projects() {
   const isSuperAdmin = user?.role === 'super_admin';
 
   const load = async () => {
-    const query = { search, status };
-    const r = isSuperAdmin ? await ProjectsAPI.listAll(query) : await ProjectsAPI.list(query);
-    setItems(r.data.data.projects || []);
+    try {
+      const query = { search, status };
+      const r = isSuperAdmin ? await ProjectsAPI.listAll(query) : await ProjectsAPI.list(query);
+      setItems(r.data?.data?.projects || []);
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+      setItems([]);
+    }
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { 
+    if (user) load(); 
+  }, [user]);
 
   const create = async () => {
-    await ProjectsAPI.create(form);
-    setShowModal(false); setForm({ name:'', description:'', status:'active' });
-    await load();
+    try {
+      if (!form.name) {
+        alert('Project name is required');
+        return;
+      }
+      await ProjectsAPI.create(form);
+      setShowModal(false); 
+      setForm({ name:'', description:'', status:'active' });
+      await load();
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      alert(error.response?.data?.message || 'Failed to create project');
+    }
   };
   const remove = async (id) => { 
-    if (confirm('Delete project?')) { await ProjectsAPI.remove(id); await load(); } 
+    try {
+      if (confirm('Delete project?')) { 
+        await ProjectsAPI.remove(id); 
+        await load(); 
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      alert(error.response?.data?.message || 'Failed to delete project');
+    }
   };
 
   return (
