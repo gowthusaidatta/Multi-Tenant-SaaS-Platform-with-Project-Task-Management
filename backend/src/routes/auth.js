@@ -6,6 +6,7 @@ import { config, PLAN_LIMITS } from '../config.js';
 import { getClient, query } from '../db.js';
 import { ok, created, badRequest, conflict, unauthorized, forbidden, notFound } from '../utils/responses.js';
 import { logAction } from '../utils/logger.js';
+import { isValidSubdomain, isValidEmail, validatePassword, isValidFullName } from '../utils/validation.js';
 
 const router = Router();
 
@@ -13,20 +14,30 @@ function signToken(payload) {
   return jwt.sign(payload, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
 }
 
-function isValidSubdomain(s) {
-  if (!s) return false;
-  if (s.length < 3 || s.length > 63) return false;
-  const re = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
-  return re.test(s);
-}
-
 // POST /api/auth/register-tenant
 router.post('/register-tenant', async (req, res) => {
   const { tenantName, subdomain, adminEmail, adminPassword, adminFullName } = req.body || {};
-  if (!tenantName || !subdomain || !adminEmail || !adminPassword || !adminFullName) {
-    return badRequest(res, 'Validation error');
+  
+  // Validation
+  if (!tenantName || typeof tenantName !== 'string' || tenantName.trim().length === 0) {
+    return badRequest(res, 'Tenant name is required and must be a non-empty string');
   }
-  if (!isValidSubdomain(String(subdomain).toLowerCase())) return badRequest(res, 'Invalid subdomain');
+  if (!subdomain || !isValidSubdomain(String(subdomain).toLowerCase())) {
+    return badRequest(res, 'Invalid subdomain format (3-63 chars, alphanumeric and hyphens)');
+  }
+  if (!adminEmail || !isValidEmail(adminEmail)) {
+    return badRequest(res, 'Valid email address is required');
+  }
+  if (!adminPassword) {
+    return badRequest(res, 'Password is required');
+  }
+  const pwValidation = validatePassword(adminPassword);
+  if (!pwValidation.valid) {
+    return badRequest(res, pwValidation.error);
+  }
+  if (!adminFullName || !isValidFullName(adminFullName)) {
+    return badRequest(res, 'Full name is required (2-255 characters)');
+  }
 
   const client = await getClient();
   try {

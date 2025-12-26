@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 COPY index.html vite.config.js ./
+# Copy both env files - will use the Docker version in Docker network
+COPY .env ./
 COPY .env.development ./
 COPY src ./src
 RUN npm run build
