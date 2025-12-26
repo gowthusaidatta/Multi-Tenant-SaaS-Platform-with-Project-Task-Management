@@ -96,7 +96,7 @@ Detailed documentation and diagrams are available in the `docs` directory:
 
 ## Project Structure
 
-
+```
 .
 ├── backend/                 # Express API, migrations, seed runner
 ├── frontend/                # React (Vite) frontend application
@@ -111,8 +111,7 @@ Detailed documentation and diagrams are available in the `docs` directory:
 ├── submission.json          # Test credentials for automated evaluation
 └── README.md
 
-
-
+```
 ## Environment Variables
 
 All required environment variables are defined **either directly in `docker-compose.yml` or via committed `.env` files** to support automated evaluation.
