@@ -249,41 +249,6 @@ The documentation covers:
 * Initialization is fully compatible with automated evaluation scripts
 
 
-## Live Demo
-
-🚀 **Frontend Live Demo**: [https://gpp-saas-frontend.vercel.app](https://gpp-saas-frontend.vercel.app)
-
-You can test the frontend application live using the test credentials provided above.
-
-### Vercel Deployment
-
-The frontend is automatically deployed to Vercel. Any push to the `main` branch triggers a new deployment.
-
-**Live URLs**:
-- Production: https://gpp-saas-frontend.vercel.app
-- Backend API (Local): http://localhost:5000/api
-
-To deploy your own version to Vercel:
-1. Push your code to GitHub
-2. Visit [https://vercel.com](https://vercel.com)
-3. Import the GitHub repository
-4. Set environment variables:
-   - `VITE_API_URL`: Your backend API URL
-5. Click Deploy
-
-## Demo Video
-
-🎥 **Video Demonstration**: [Watch on YouTube](YOUR_YOUTUBE_LINK_HERE)
-
-The demo video covers:
-- Architecture walkthrough and multi-tenancy explanation
-- Running application via docker-compose
-- Tenant registration and login
-- User management and role-based access
-- Project and task management
-- Data isolation demonstration
-- Code walkthrough
-
 
 ## Documentation
 
@@ -294,12 +259,6 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[PRD](docs/PRD.md)** - Product requirements and user personas
 - **[Research](docs/research.md)** - Multi-tenancy analysis and tech stack justification
 - **[Technical Spec](docs/technical-spec.md)** - Project structure and setup guide
-- **[Security](docs/SECURITY.md)** - Security considerations and best practices
-- **[Deployment](docs/DEPLOYMENT.md)** - Production deployment guide
-- **[Testing](docs/TESTING.md)** - Testing strategies and examples
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[FAQ](docs/FAQ.md)** - Frequently asked questions
-- **[Performance](docs/PERFORMANCE.md)** - Performance optimization guide
 
 
 ## Contributing
