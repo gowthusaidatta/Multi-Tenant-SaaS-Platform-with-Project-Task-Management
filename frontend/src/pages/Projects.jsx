@@ -10,21 +10,22 @@ export default function Projects() {
   const [status, setStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', status: 'active' });
+  const [reload, setReload] = useState(0);
   const isSuperAdmin = user?.role === 'super_admin';
 
-  const load = async () => {
-    try {
-      const query = { search, status };
-      const r = isSuperAdmin ? await ProjectsAPI.listAll(query) : await ProjectsAPI.list(query);
-      setItems(r.data?.data?.projects || []);
-    } catch (error) {
-      console.error('Failed to load projects:', error);
-      setItems([]);
-    }
-  };
-  useEffect(() => { 
-    if (user) load(); 
-  }, [user]);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const query = { search, status };
+        const r = isSuperAdmin ? await ProjectsAPI.listAll(query) : await ProjectsAPI.list(query);
+        setItems(r.data?.data?.projects || []);
+      } catch (error) {
+        console.error('Failed to load projects:', error);
+        setItems([]);
+      }
+    };
+    if (user) load();
+  }, [user, search, status, isSuperAdmin, reload]);
 
   const create = async () => {
     try {
@@ -35,7 +36,7 @@ export default function Projects() {
       await ProjectsAPI.create(form);
       setShowModal(false); 
       setForm({ name:'', description:'', status:'active' });
-      await load();
+      setReload(r => r + 1);
     } catch (error) {
       console.error('Failed to create project:', error);
       alert(error.response?.data?.message || 'Failed to create project');
@@ -45,7 +46,7 @@ export default function Projects() {
     try {
       if (confirm('Delete project?')) { 
         await ProjectsAPI.remove(id); 
-        await load(); 
+        setReload(r => r + 1);
       }
     } catch (error) {
       console.error('Failed to delete project:', error);

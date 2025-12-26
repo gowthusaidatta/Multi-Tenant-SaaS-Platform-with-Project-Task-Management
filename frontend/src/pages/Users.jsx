@@ -9,21 +9,22 @@ export default function Users() {
   const [role, setRole] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ email: '', fullName: '', password: '', role: 'user', isActive: true });
+  const [reload, setReload] = useState(0);
   const isSuperAdmin = user?.role === 'super_admin';
 
-  const load = async () => {
-    try {
-      const query = { search, role };
-      const r = isSuperAdmin ? await UsersAPI.listAll(query) : await UsersAPI.list(user?.tenant?.id, query);
-      setItems(r.data?.data?.users || []);
-    } catch (error) {
-      console.error('Failed to load users:', error);
-      setItems([]);
-    }
-  };
-  useEffect(() => { 
-    if (user) load(); 
-  }, [user]);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const query = { search, role };
+        const r = isSuperAdmin ? await UsersAPI.listAll(query) : await UsersAPI.list(user?.tenant?.id, query);
+        setItems(r.data?.data?.users || []);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        setItems([]);
+      }
+    };
+    if (user) load();
+  }, [user, search, role, isSuperAdmin, reload]);
 
   const add = async () => {
     try {
@@ -38,7 +39,7 @@ export default function Users() {
       }
       setShowModal(false); 
       setForm({ email:'', fullName:'', password:'', role:'user', isActive:true });
-      await load();
+      setReload(r => r + 1);
     } catch (error) {
       console.error('Failed to add user:', error);
       alert(error.response?.data?.message || 'Failed to add user');
@@ -48,7 +49,7 @@ export default function Users() {
     try {
       if (confirm('Delete user?')) { 
         await UsersAPI.remove(id); 
-        await load(); 
+        setReload(r => r + 1);
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
