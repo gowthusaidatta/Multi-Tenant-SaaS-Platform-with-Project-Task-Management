@@ -51,12 +51,14 @@ export const UsersAPI = {
 export const ProjectsAPI = {
   create: (payload) => api.post('/projects', payload),
   list: (params) => api.get('/projects', { params }),
+  listAll: (params) => api.get('/projects/all', { params }), // super_admin: list all projects across all tenants
   update: (projectId, payload) => api.put(`/projects/${projectId}`, payload),
   remove: (projectId) => api.delete(`/projects/${projectId}`)
 };
 
 export const TasksAPI = {
   list: (projectId, params) => api.get(`/projects/${projectId}/tasks`, { params }),
+  listAll: (params) => api.get('/tasks/all', { params }), // super_admin: list all tasks across all tenants
   create: (projectId, payload) => api.post(`/projects/${projectId}/tasks`, payload),
   update: (taskId, payload) => api.put(`/tasks/${taskId}`, payload),
   updateStatus: (taskId, status) => api.patch(`/tasks/${taskId}/status`, { status }),
