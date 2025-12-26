@@ -43,6 +43,7 @@ export const TenantsAPI = {
 export const UsersAPI = {
   add: (tenantId, payload) => api.post(`/tenants/${tenantId}/users`, payload),
   list: (tenantId, params) => api.get(`/tenants/${tenantId}/users`, { params }),
+  listAll: (params) => api.get('/users', { params }), // super_admin: list all users across all tenants
   update: (userId, payload) => api.put(`/users/${userId}`, payload),
   remove: (userId) => api.delete(`/users/${userId}`)
 };
