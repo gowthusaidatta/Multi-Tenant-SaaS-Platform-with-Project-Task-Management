@@ -19,22 +19,22 @@ export default function Users() {
   useEffect(() => { load(); }, []);
 
   const add = async () => {
-    if (!isSuperAdmin) {
+    if (isSuperAdmin) {
+      await UsersAPI.add(user.tenant.id || 'system', form);
+    } else {
       await UsersAPI.add(user.tenant.id, form);
-      setShowModal(false); setForm({ email:'', fullName:'', password:'', role:'user', isActive:true });
-      await load();
     }
+    setShowModal(false); setForm({ email:'', fullName:'', password:'', role:'user', isActive:true });
+    await load();
   };
   const remove = async (id) => { 
-    if (!isSuperAdmin) {
-      if (confirm('Delete user?')) { await UsersAPI.remove(id); await load(); } 
-    }
+    if (confirm('Delete user?')) { await UsersAPI.remove(id); await load(); } 
   };
 
   return (
     <div>
       <h2>{isSuperAdmin ? 'All Users' : 'Team Members'}</h2>
-      {isSuperAdmin && <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>👁️ Viewing all users across all tenants (View only - you cannot create/delete)</p>}
+      {isSuperAdmin && <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>� System-wide access - You can view, create, and delete users across all tenants</p>}
       <div className="stack" style={{ margin:'8px 0' }}>
         <input className="input" placeholder="Search" value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="select" value={role} onChange={e=>setRole(e.target.value)}>
@@ -44,7 +44,7 @@ export default function Users() {
           {isSuperAdmin && <option value="super_admin">Super Admin</option>}
         </select>
         <button className="btn" onClick={load}>Filter</button>
-        {!isSuperAdmin && <button className="btn btn-primary right" onClick={()=>setShowModal(true)}>Add User</button>}
+        <button className="btn btn-primary right" onClick={()=>setShowModal(true)}>Add User</button>
       </div>
       <table className="table">
         <thead>
@@ -54,7 +54,7 @@ export default function Users() {
             <th>Role</th>
             {isSuperAdmin && <th>Tenant</th>}
             <th>Status</th>
-            {!isSuperAdmin && <th>Actions</th>}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -65,12 +65,12 @@ export default function Users() {
               <td><span className="badge">{u.role}</span></td>
               {isSuperAdmin && <td><small>{u.tenantName || 'System'}</small></td>}
               <td>{u.isActive ? <span className="badge badge-success">Active</span> : <span className="badge">Inactive</span>}</td>
-              {!isSuperAdmin && <td><button className="btn btn-danger" onClick={()=>remove(u.id)}>Delete</button></td>}
+              <td><button className="btn btn-danger" onClick={()=>remove(u.id)}>Delete</button></td>
             </tr>
           ))}
         </tbody>
       </table>
-      {!isSuperAdmin && showModal && (
+      {showModal && (
         <div className="modal-backdrop">
           <div className="modal">
             <div className="modal-header"><h3>Add User</h3><button className="btn" onClick={()=>setShowModal(false)}>✕</button></div>

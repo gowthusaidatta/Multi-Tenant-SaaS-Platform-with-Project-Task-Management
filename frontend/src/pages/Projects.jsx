@@ -20,22 +20,18 @@ export default function Projects() {
   useEffect(() => { load(); }, []);
 
   const create = async () => {
-    if (!isSuperAdmin) {
-      await ProjectsAPI.create(form);
-      setShowModal(false); setForm({ name:'', description:'', status:'active' });
-      await load();
-    }
+    await ProjectsAPI.create(form);
+    setShowModal(false); setForm({ name:'', description:'', status:'active' });
+    await load();
   };
   const remove = async (id) => { 
-    if (!isSuperAdmin) {
-      if (confirm('Delete project?')) { await ProjectsAPI.remove(id); await load(); } 
-    }
+    if (confirm('Delete project?')) { await ProjectsAPI.remove(id); await load(); } 
   };
 
   return (
     <div>
       <h2>Projects</h2>
-      {isSuperAdmin && <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>👁️ Viewing all projects across all tenants (View only - you cannot create/delete)</p>}
+      {isSuperAdmin && <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>� System-wide access - You can view, create, and delete projects from any tenant</p>}
       <div className="stack" style={{ margin:'8px 0' }}>
         <input className="input" placeholder="Search" value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="select" value={status} onChange={e=>setStatus(e.target.value)}>
@@ -45,7 +41,7 @@ export default function Projects() {
           <option value="completed">Completed</option>
         </select>
         <button className="btn" onClick={load}>Filter</button>
-        {!isSuperAdmin && <button className="btn btn-primary right" onClick={()=>setShowModal(true)}>Create New Project</button>}
+        <button className="btn btn-primary right" onClick={()=>setShowModal(true)}>Create New Project</button>
       </div>
       <ul className="item-list">
         {items.map(p => (
@@ -57,12 +53,12 @@ export default function Projects() {
             </div>
             <span className="right stack">
               {!isSuperAdmin && <Link to={`/projects/${p.id}`}><button className="btn">View</button></Link>}
-              {!isSuperAdmin && <button className="btn btn-danger" onClick={()=>remove(p.id)}>Delete</button>}
+              <button className="btn btn-danger" onClick={()=>remove(p.id)}>Delete</button>
             </span>
           </li>
         ))}
       </ul>
-      {!isSuperAdmin && showModal && (
+      {showModal && (
         <div className="modal-backdrop">
           <div className="modal">
             <div className="modal-header"><h3>Create Project</h3><button className="btn" onClick={()=>setShowModal(false)}>✕</button></div>
