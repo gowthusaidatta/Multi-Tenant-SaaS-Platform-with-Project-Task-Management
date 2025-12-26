@@ -8,6 +8,79 @@ import { logAction } from '../utils/logger.js';
 
 const router = Router();
 
+// List All Users (super_admin only)
+router.get('/users/all', authMiddleware, async (req, res) => {
+  const me = req.user;
+  if (me.role !== 'super_admin') return forbidden(res, 'Only super admin can view all users');
+  
+  const page = Math.max(1, parseInt(req.query.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '50', 10)));
+  const offset = (page - 1) * limit;
+  const role = req.query.role || null;
+  const search = (req.query.search || '').toLowerCase();
+  const tenantSubdomain = (req.query.tenantSubdomain || '').toLowerCase();
+
+  let whereClause = `WHERE 1=1`;
+  const params = [];
+
+  if (role) {
+    params.push(role);
+    whereClause += ` AND role=$${params.length}::user_role`;
+  }
+
+  if (search) {
+    params.push(search);
+    whereClause += ` AND ($${params.length} = '' OR LOWER(full_name) LIKE '%' || $${params.length} || '%' OR LOWER(email) LIKE '%' || $${params.length} || '%')`;
+  }
+
+  if (tenantSubdomain) {
+    params.push(tenantSubdomain);
+    whereClause += ` AND tenant_id IN (SELECT id FROM tenants WHERE LOWER(subdomain) = $${params.length})`;
+  }
+
+  // Get all users
+  params.push(limit);
+  params.push(offset);
+  
+  const users = await query(
+    `SELECT u.id, u.email, u.full_name, u.role, u.is_active, u.created_at, u.tenant_id, 
+            COALESCE(t.name, 'System') AS tenant_name, COALESCE(t.subdomain, 'system') AS tenant_subdomain
+     FROM users u
+     LEFT JOIN tenants t ON u.tenant_id = t.id
+     ${whereClause}
+     ORDER BY u.created_at DESC 
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params
+  );
+
+  // Get total count
+  const countParams = params.slice(0, -2);
+  const count = await query(
+    `SELECT COUNT(*)::int AS total FROM users u
+     LEFT JOIN tenants t ON u.tenant_id = t.id
+     ${whereClause}`,
+    countParams
+  );
+
+  await logAction({ tenantId: null, userId: me.userId, action: 'LIST_ALL_USERS', entityType: 'user', entityId: null });
+
+  return ok(res, {
+    users: users.rows.map(u => ({
+      id: u.id,
+      email: u.email,
+      fullName: u.full_name,
+      role: u.role,
+      isActive: u.is_active,
+      createdAt: u.created_at,
+      tenantId: u.tenant_id,
+      tenantName: u.tenant_name,
+      tenantSubdomain: u.tenant_subdomain
+    })),
+    total: count.rows[0].total,
+    pagination: { currentPage: page, totalPages: Math.ceil(count.rows[0].total / limit), limit }
+  });
+});
+
 // Add User to Tenant (tenant_admin only)
 router.post('/tenants/:tenantId/users', authMiddleware, async (req, res) => {
   const { tenantId } = req.params;

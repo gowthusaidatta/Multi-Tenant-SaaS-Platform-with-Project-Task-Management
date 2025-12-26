@@ -37,6 +37,12 @@ GET /api/tenants
 
 ## Users
 
+GET /api/users/all
+- Auth: super_admin only
+- Query: page?, limit?, role?, search?, tenantSubdomain?
+- 200: { success, data: { users: [{id, email, fullName, role, isActive, createdAt, tenantId, tenantName, tenantSubdomain}], total, pagination } }
+- Description: Super admin can view all users across all tenants in the system
+
 POST /api/tenants/:tenantId/users
 - Auth: tenant_admin only
 - Body: { email, password, fullName, role?('user'|'tenant_admin') }
