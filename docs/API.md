@@ -64,6 +64,12 @@ DELETE /api/users/:userId
 
 ## Projects
 
+GET /api/projects/all
+- Auth: super_admin only
+- Query: page?, limit?, status?, search?, tenantSubdomain?
+- 200: { success, data: { projects: [{id, name, description, status, tenantId, tenantName, tenantSubdomain, createdBy, taskCount, completedTaskCount, createdAt}], total, pagination } }
+- Description: Super admin can view all projects across all tenants
+
 POST /api/projects
 - Auth: required
 - Body: { name, description?, status?('active'|'archived'|'completed') }
@@ -84,6 +90,12 @@ DELETE /api/projects/:projectId
 - 200: { success, message }
 
 ## Tasks
+
+GET /api/tasks/all
+- Auth: super_admin only
+- Query: page?, limit?, status?, priority?, search?, tenantSubdomain?, projectId?
+- 200: { success, data: { tasks: [{id, title, description, status, priority, projectId, projectName, tenantId, tenantName, tenantSubdomain, assignedTo, dueDate, createdAt}], total, pagination } }
+- Description: Super admin can view all tasks across all tenants and projects
 
 POST /api/projects/:projectId/tasks
 - Auth: required

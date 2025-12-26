@@ -22,6 +22,83 @@ router.post('/projects', authMiddleware, async (req, res) => {
   return created(res, { id, tenantId: me.tenantId, name, description, status, createdBy: me.userId, createdAt: new Date().toISOString() });
 });
 
+// List All Projects (super_admin only)
+router.get('/projects/all', authMiddleware, async (req, res) => {
+  const me = req.user;
+  if (me.role !== 'super_admin') return forbidden(res, 'Only super admin can view all projects');
+  
+  const status = req.query.status || null;
+  const search = (req.query.search || '').toLowerCase();
+  const tenantSubdomain = (req.query.tenantSubdomain || '').toLowerCase();
+  const page = Math.max(1, parseInt(req.query.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)));
+  const offset = (page - 1) * limit;
+
+  let whereClause = `WHERE 1=1`;
+  const params = [];
+
+  if (status) {
+    params.push(status);
+    whereClause += ` AND p.status=$${params.length}::project_status`;
+  }
+
+  if (search) {
+    params.push(search);
+    whereClause += ` AND ($${params.length}='' OR LOWER(p.name) LIKE '%'||$${params.length}||'%')`;
+  }
+
+  if (tenantSubdomain) {
+    params.push(tenantSubdomain);
+    whereClause += ` AND t.subdomain=$${params.length}`;
+  }
+
+  params.push(limit);
+  params.push(offset);
+
+  const projects = await query(
+    `SELECT p.*, u.full_name as creator_name, t.name as tenant_name, t.subdomain as tenant_subdomain
+     FROM projects p
+     JOIN users u ON u.id=p.created_by
+     JOIN tenants t ON t.id=p.tenant_id
+     ${whereClause}
+     ORDER BY p.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params
+  );
+
+  const countParams = params.slice(0, -2);
+  const count = await query(
+    `SELECT COUNT(*)::int AS total FROM projects p
+     JOIN tenants t ON t.id=p.tenant_id
+     ${whereClause}`,
+    countParams
+  );
+
+  const result = await Promise.all(projects.rows.map(async p => {
+    const t = await query('SELECT COUNT(*)::int AS total, SUM(CASE WHEN status=\'completed\' THEN 1 ELSE 0 END)::int AS completed FROM tasks WHERE project_id=$1', [p.id]);
+    return {
+      id: p.id, 
+      name: p.name, 
+      description: p.description, 
+      status: p.status,
+      tenantId: p.tenant_id,
+      tenantName: p.tenant_name,
+      tenantSubdomain: p.tenant_subdomain,
+      createdBy: { id: p.created_by, fullName: p.creator_name },
+      taskCount: t.rows[0].total || 0, 
+      completedTaskCount: t.rows[0].completed || 0,
+      createdAt: p.created_at
+    };
+  }));
+
+  await logAction({ tenantId: null, userId: me.userId, action: 'LIST_ALL_PROJECTS', entityType: 'project', entityId: null });
+
+  return ok(res, { 
+    projects: result, 
+    total: count.rows[0].total, 
+    pagination: { currentPage: page, totalPages: Math.ceil(count.rows[0].total / limit), limit } 
+  });
+});
+
 // List Projects
 router.get('/projects', authMiddleware, async (req, res) => {
   const me = req.user;

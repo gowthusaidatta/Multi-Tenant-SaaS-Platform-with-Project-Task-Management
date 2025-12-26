@@ -7,6 +7,95 @@ import { logAction } from '../utils/logger.js';
 
 const router = Router();
 
+// List All Tasks (super_admin only)
+router.get('/tasks/all', authMiddleware, async (req, res) => {
+  const me = req.user;
+  if (me.role !== 'super_admin') return forbidden(res, 'Only super admin can view all tasks');
+  
+  const status = req.query.status || null;
+  const priority = req.query.priority || null;
+  const search = (req.query.search || '').toLowerCase();
+  const tenantSubdomain = (req.query.tenantSubdomain || '').toLowerCase();
+  const projectId = req.query.projectId || null;
+  const page = Math.max(1, parseInt(req.query.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '50', 10)));
+  const offset = (page - 1) * limit;
+
+  let whereClause = `WHERE 1=1`;
+  const params = [];
+
+  if (status) {
+    params.push(status);
+    whereClause += ` AND t.status=$${params.length}::task_status`;
+  }
+
+  if (priority) {
+    params.push(priority);
+    whereClause += ` AND t.priority=$${params.length}::task_priority`;
+  }
+
+  if (search) {
+    params.push(search);
+    whereClause += ` AND ($${params.length}='' OR LOWER(t.title) LIKE '%'||$${params.length}||'%')`;
+  }
+
+  if (tenantSubdomain) {
+    params.push(tenantSubdomain);
+    whereClause += ` AND tn.subdomain=$${params.length}`;
+  }
+
+  if (projectId) {
+    params.push(projectId);
+    whereClause += ` AND t.project_id=$${params.length}`;
+  }
+
+  params.push(limit);
+  params.push(offset);
+
+  const tasks = await query(
+    `SELECT t.*, u.full_name, u.email, p.name as project_name, tn.name as tenant_name, tn.subdomain as tenant_subdomain
+     FROM tasks t
+     LEFT JOIN users u ON u.id=t.assigned_to
+     JOIN projects p ON p.id=t.project_id
+     JOIN tenants tn ON tn.id=t.tenant_id
+     ${whereClause}
+     ORDER BY CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, t.due_date ASC NULLS LAST
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params
+  );
+
+  const countParams = params.slice(0, -2);
+  const count = await query(
+    `SELECT COUNT(*)::int AS total FROM tasks t
+     JOIN projects p ON p.id=t.project_id
+     JOIN tenants tn ON tn.id=t.tenant_id
+     ${whereClause}`,
+    countParams
+  );
+
+  await logAction({ tenantId: null, userId: me.userId, action: 'LIST_ALL_TASKS', entityType: 'task', entityId: null });
+
+  return ok(res, {
+    tasks: tasks.rows.map(t => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      priority: t.priority,
+      projectId: t.project_id,
+      projectName: t.project_name,
+      tenantId: t.tenant_id,
+      tenantName: t.tenant_name,
+      tenantSubdomain: t.tenant_subdomain,
+      assignedTo: t.assigned_to ? { id: t.assigned_to, fullName: t.full_name, email: t.email } : null,
+      dueDate: t.due_date,
+      createdAt: t.created_at
+    })),
+    total: count.rows[0].total,
+    pagination: { currentPage: page, totalPages: Math.ceil(count.rows[0].total / limit), limit }
+  });
+});
+
 // Create Task (tenant from project)
 router.post('/projects/:projectId/tasks', authMiddleware, async (req, res) => {
   const me = req.user;
