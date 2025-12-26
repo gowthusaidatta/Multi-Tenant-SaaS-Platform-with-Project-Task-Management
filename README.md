@@ -135,6 +135,49 @@ All required environment variables are defined **either directly in `docker-comp
 > `database`, `backend`, and `frontend` (not `localhost`).
 
 
+## Verified Setup
+
+This project has been tested on Ubuntu 24.04 with:
+
+- Docker 28.x
+- Docker Compose v2+
+
+### Clean Start
+
+```bash
+git clone https://github.com/gowthusaidatta/Multi-Tenant-SaaS-Platform-with-Project-Task-Management.git
+cd Multi-Tenant-SaaS-Platform-with-Project-Task-Management
+docker compose up -d --build
+```
+
+### Health Check
+
+```bash
+curl http://localhost:5000/api/health
+```
+
+Expected:
+
+```json
+{"status":"ok","database":"connected"}
+```
+
+### Seeded Accounts
+
+| Role         | Email                   | Password   | Tenant |
+|--------------|-------------------------|------------|--------|
+| Super Admin  | superadmin@system.com   | Admin@123  | system |
+| Tenant Admin | admin@demo.com          | Demo@123   | demo   |
+| User         | user1@demo.com          | User@123   | demo   |
+
+### Auth API Test
+
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@demo.com","password":"Demo@123","tenantSubdomain":"demo"}'
+```
+
 ## Quick Start (Docker)
 
 ### Prerequisites
