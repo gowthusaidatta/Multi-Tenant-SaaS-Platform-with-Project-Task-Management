@@ -25,11 +25,25 @@ export default function Groups() {
 
   const loadTenants = async () => {
     try {
-      const r = await TenantsAPI.list({ limit: 100 });
-      const list = r.data?.data?.tenants || [];
-      setTenants(list);
-      if (list.length && !selectedTenantId) {
-        setSelectedTenantId(list[0].id);
+      if (isSuperAdmin) {
+        const r = await TenantsAPI.list({ limit: 100 });
+        const list = r.data?.data?.tenants || [];
+        setTenants(list);
+        if (list.length && !selectedTenantId) {
+          setSelectedTenantId(list[0].id);
+        }
+      } else if (isTenantAdmin && user?.tenant?.id) {
+        // Tenant admin: only own tenant
+        const t = user.tenant;
+        setTenants([{
+          id: t.id,
+          name: t.name,
+          subdomain: t.subdomain,
+          subscriptionPlan: t.subscriptionPlan,
+          status: 'active',
+          totalUsers: undefined,
+        }]);
+        setSelectedTenantId(t.id);
       }
     } catch (e) {
       console.error('Failed to load tenants:', e);
@@ -55,7 +69,7 @@ export default function Groups() {
   useEffect(() => {
     if (!user) return;
     loadTenants();
-  }, [user]);
+  }, [user, isSuperAdmin, isTenantAdmin]);
 
   useEffect(() => {
     loadTenantUsers();

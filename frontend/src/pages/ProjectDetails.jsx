@@ -11,6 +11,7 @@ export default function ProjectDetails() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isSuperAdmin = user?.role === 'super_admin';
+  const isTenantAdmin = user?.role === 'tenant_admin';
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -152,13 +153,15 @@ export default function ProjectDetails() {
             >
               <div className="flex items-start justify-between mb-2">
                 <h4 className="font-medium text-gray-900 flex-1">{task.title}</h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={Trash2}
-                  onClick={() => removeTask(task.id)}
-                  className="text-red-600 hover:bg-red-50 -mt-2 -mr-2"
-                />
+                {(isSuperAdmin || isTenantAdmin) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={Trash2}
+                    onClick={() => removeTask(task.id)}
+                    className="text-red-600 hover:bg-red-50 -mt-2 -mr-2"
+                  />
+                )}
               </div>
               {task.description && (
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
@@ -175,6 +178,7 @@ export default function ProjectDetails() {
                   value={task.status}
                   onChange={(e) => updateTaskStatus(task.id, e.target.value)}
                   onClick={(e) => e.stopPropagation()}
+                  disabled={!(isSuperAdmin || isTenantAdmin || (task.assignedTo?.id === user?.id))}
                 >
                   <option value="todo">Todo</option>
                   <option value="in_progress">In Progress</option>

@@ -11,6 +11,7 @@ import Users from './pages/Users';
 import Tasks from './pages/Tasks';
 import Groups from './pages/Groups';
 import Subscription from './pages/Subscription';
+import Settings from './pages/Settings';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
         <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="*" element={<Login />} />
       </Routes>
     </AuthProvider>

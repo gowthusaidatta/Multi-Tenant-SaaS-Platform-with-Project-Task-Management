@@ -66,12 +66,17 @@ export default function Tasks() {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', description: '', status: '', priority: '' });
   const isSuperAdmin = user?.role === 'super_admin';
+  const isTenantAdmin = user?.role === 'tenant_admin';
 
   const loadTasks = async () => {
     setLoading(true);
     try {
-      const query = { search: filter.search, status: filter.status, priority: filter.priority, project: filter.project, page, limit: 20 };
-      const r = isSuperAdmin ? await TasksAPI.listAll(query) : await TasksAPI.listAllForProject(query);
+      const query = { search: filter.search, status: filter.status, priority: filter.priority, projectId: filter.project, page, limit: 20 };
+      const r = isSuperAdmin
+        ? await TasksAPI.listAll(query)
+        : isTenantAdmin
+          ? await TasksAPI.listForTenant(query)
+          : await TasksAPI.listMine(query);
       setItems(r.data?.data?.tasks || []);
       const pg = r.data?.data?.pagination;
       if (pg) {
@@ -154,6 +159,13 @@ export default function Tasks() {
   };
 
   const startEdit = () => {
+    // Only allow edit if permitted by role or assignment
+    const canEdit = isSuperAdmin || isTenantAdmin || (selectedTask?.assignedTo?.id === user?.id);
+    if (!canEdit) {
+      setToast('You can only edit tasks assigned to you');
+      setTimeout(() => setToast(''), 2500);
+      return;
+    }
     setIsEditing(true);
   };
 
@@ -327,20 +339,24 @@ export default function Tasks() {
                   </>
                 ) : (
                   <>
-                    <Button variant="secondary" icon={Edit} onClick={startEdit}>
-                      Edit Task
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      icon={Trash2}
-                      onClick={() => {
-                        removeTask(selectedTask.id);
-                        closeTaskDetail();
-                      }}
-                      className="text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </Button>
+                    {(isSuperAdmin || isTenantAdmin || (selectedTask?.assignedTo?.id === user?.id)) && (
+                      <Button variant="secondary" icon={Edit} onClick={startEdit}>
+                        Edit Task
+                      </Button>
+                    )}
+                    {(isSuperAdmin || isTenantAdmin) && (
+                      <Button
+                        variant="ghost"
+                        icon={Trash2}
+                        onClick={() => {
+                          removeTask(selectedTask.id);
+                          closeTaskDetail();
+                        }}
+                        className="text-red-600 hover:bg-red-50"
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </>
                 )}
               </div>
@@ -389,6 +405,7 @@ export default function Tasks() {
                       className="select"
                       value={editForm.status}
                       onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      disabled={!(isSuperAdmin || isTenantAdmin || (selectedTask?.assignedTo?.id === user?.id))}
                     >
                       <option value="todo">To Do</option>
                       <option value="in_progress">In Progress</option>
@@ -408,6 +425,7 @@ export default function Tasks() {
                       className="select"
                       value={editForm.priority}
                       onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
+                      disabled={!(isSuperAdmin || isTenantAdmin || (selectedTask?.assignedTo?.id === user?.id))}
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -785,6 +803,7 @@ export default function Tasks() {
                             className="select text-sm min-w-[120px]"
                             value={t.status}
                             onChange={(e) => updateStatus(t.id, e.target.value)}
+                            disabled={!(isSuperAdmin || isTenantAdmin || (t.assignedTo?.id === user?.id))}
                           >
                             <option value="todo">To Do</option>
                             <option value="in_progress">In Progress</option>
@@ -817,6 +836,7 @@ export default function Tasks() {
                             >
                               View
                             </Button>
+                            {(isSuperAdmin || isTenantAdmin) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -826,6 +846,7 @@ export default function Tasks() {
                             >
                               Delete
                             </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
