@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth';
-import { TasksAPI, ProjectsAPI } from '../api';
+import { TasksAPI, ProjectsAPI, UsersAPI } from '../api';
 import MainLayout from '../components/MainLayout';
 import {
   PageHeader,
@@ -64,7 +64,8 @@ export default function Tasks() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', description: '', status: '', priority: '' });
+  const [editForm, setEditForm] = useState({ title: '', description: '', status: '', priority: '', assignedTo: [], dueDate: '' });
+  const [assignees, setAssignees] = useState([]);
   const isSuperAdmin = user?.role === 'super_admin';
   const isTenantAdmin = user?.role === 'tenant_admin';
 
@@ -100,6 +101,18 @@ export default function Tasks() {
       try {
         const pr = isSuperAdmin ? await ProjectsAPI.listAll({ limit: 50 }) : await ProjectsAPI.list({ limit: 50 });
         setProjects(pr.data?.data?.projects || []);
+        // Load assignees for tenant (admins only)
+        const tenantIdForList = isSuperAdmin ? (user?.tenant?.id || null) : user?.tenant?.id;
+        if (tenantIdForList && (isSuperAdmin || isTenantAdmin)) {
+          try {
+            const ur = await UsersAPI.list(tenantIdForList, { limit: 100 });
+            setAssignees(ur.data?.data?.users || []);
+          } catch (e) {
+            console.warn('Failed to load assignees:', e?.message);
+          }
+        } else {
+          setAssignees([]);
+        }
       } catch (e) {
         console.error('Failed to load projects:', e);
       }
@@ -149,8 +162,28 @@ export default function Tasks() {
       description: task.description || '',
       status: task.status || 'todo',
       priority: task.priority || 'low',
+      assignedTo: (task.assignees || (task.assignedTo ? [task.assignedTo] : [])).map(a => a.id),
+      dueDate: task.dueDate || '',
     });
     setIsEditing(false);
+    loadAssigneesForTask(task);
+  };
+
+  const loadAssigneesForTask = async (task) => {
+    try {
+      let tenantId = null;
+      if (isSuperAdmin && task.tenantId) tenantId = task.tenantId;
+      else if (isTenantAdmin && user?.tenant?.id) tenantId = user.tenant.id;
+      if (!tenantId) {
+        setAssignees([]);
+        return;
+      }
+      const ur = await UsersAPI.list(tenantId, { limit: 100 });
+      setAssignees(ur.data?.data?.users || []);
+    } catch (e) {
+      console.warn('Failed to load assignees for task:', e?.message);
+      setAssignees([]);
+    }
   };
 
   const closeTaskDetail = () => {
@@ -462,7 +495,46 @@ export default function Tasks() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
-                  {selectedTask.assignedTo ? (
+                  {isEditing && (isSuperAdmin || isTenantAdmin) ? (
+                    <div className="space-y-2">
+                      {assignees.length === 0 && (
+                        <div className="text-sm text-gray-500">No users found for this domain</div>
+                      )}
+                      {assignees.map((u) => {
+                        const checked = editForm.assignedTo.includes(u.id);
+                        return (
+                          <label key={u.id} className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              className="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const sel = new Set(editForm.assignedTo);
+                                if (e.target.checked) sel.add(u.id); else sel.delete(u.id);
+                                setEditForm({ ...editForm, assignedTo: Array.from(sel) });
+                              }}
+                            />
+                            <span className="text-sm text-gray-800">{u.fullName}</span>
+                            <span className="text-xs text-gray-500">({u.email})</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : selectedTask.assignees && selectedTask.assignees.length > 0 ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {selectedTask.assignees.slice(0, 3).map((a) => (
+                        <div key={a.id} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
+                          <div className="w-8 h-8 rounded-full bg-accent-100 text-accent-700 flex items-center justify-center font-semibold text-sm">
+                            {a.fullName?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <span className="text-sm text-gray-900">{a.fullName}</span>
+                        </div>
+                      ))}
+                      {selectedTask.assignees.length > 3 && (
+                        <span className="badge">+{selectedTask.assignees.length - 3} more</span>
+                      )}
+                    </div>
+                  ) : selectedTask.assignedTo ? (
                     <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
                       <div className="w-10 h-10 rounded-full bg-accent-100 text-accent-700 flex items-center justify-center font-semibold">
                         {selectedTask.assignedTo.fullName?.charAt(0).toUpperCase() || 'U'}
@@ -482,18 +554,30 @@ export default function Tasks() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
-                  <div className="px-3 py-2 bg-gray-50 rounded-lg flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-gray-500" />
-                    <span className="text-gray-900">
-                      {selectedTask.dueDate
-                        ? new Date(selectedTask.dueDate).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })
-                        : 'No due date'}
-                    </span>
-                  </div>
+                  {isEditing ? (
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="date"
+                        className="input"
+                        value={editForm.dueDate}
+                        onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
+                      />
+                      <Button variant="ghost" onClick={() => setEditForm({ ...editForm, dueDate: '' })}>Clear</Button>
+                    </div>
+                  ) : (
+                    <div className="px-3 py-2 bg-gray-50 rounded-lg flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-gray-500" />
+                      <span className="text-gray-900">
+                        {selectedTask.dueDate
+                          ? new Date(selectedTask.dueDate).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })
+                          : 'No due date'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -811,12 +895,16 @@ export default function Tasks() {
                           </select>
                         </td>
                         <td>
-                          {t.assignedTo ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 bg-accent-100 text-accent-700 rounded-full flex items-center justify-center font-semibold text-sm">
-                                {t.assignedTo.fullName?.charAt(0).toUpperCase() || 'U'}
-                              </div>
-                              <span className="text-gray-800 text-sm">{t.assignedTo.fullName}</span>
+                          {t.assignees && t.assignees.length > 0 ? (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {t.assignees.slice(0, 2).map(a => (
+                                <div key={a.id} className="w-7 h-7 bg-accent-100 text-accent-700 rounded-full flex items-center justify-center font-semibold text-xs">
+                                  {a.fullName?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                              ))}
+                              {t.assignees.length > 2 && (
+                                <span className="badge">+{t.assignees.length - 2}</span>
+                              )}
                             </div>
                           ) : (
                             <span className="text-gray-500 text-sm flex items-center gap-1">

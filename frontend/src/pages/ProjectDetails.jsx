@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ProjectsAPI, TasksAPI } from '../api';
+import { ProjectsAPI, TasksAPI, UsersAPI } from '../api';
 import { useAuth } from '../auth';
 import MainLayout from '../components/MainLayout';
 import { PageHeader, StatusBadge, PriorityBadge, Button, Modal, EmptyState, KPICard, Toast } from '../components/UIComponents';
@@ -16,7 +16,8 @@ export default function ProjectDetails() {
   const [tasks, setTasks] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '' });
+  const [form, setForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: [], dueDate: '' });
+  const [assignees, setAssignees] = useState([]);
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +29,19 @@ export default function ProjectDetails() {
       setProject(p);
       const tr = await TasksAPI.list(projectId, {});
       setTasks(tr.data.data.tasks || []);
+      // Load assignees for the tenant (admins only see dropdown)
+      const tenantIdForProject = isSuperAdmin ? p?.tenantId : user?.tenant?.id;
+      if (tenantIdForProject) {
+        try {
+          const ur = await UsersAPI.list(tenantIdForProject, { limit: 100 });
+          setAssignees(ur.data?.data?.users || []);
+        } catch (e) {
+          console.warn('Failed to load assignees:', e?.message);
+          setAssignees([]);
+        }
+      } else {
+        setAssignees([]);
+      }
     } catch (error) {
       console.error('Failed to load project:', error);
     } finally {
@@ -61,10 +75,11 @@ export default function ProjectDetails() {
         title: form.title,
         description: form.description,
         priority: form.priority,
-        assignedTo: form.assignedTo || null,
+        assignedTo: form.assignedTo,
+        dueDate: form.dueDate || null,
       });
       setShowModal(false);
-      setForm({ title: '', description: '', priority: 'medium', assignedTo: '' });
+      setForm({ title: '', description: '', priority: 'medium', assignedTo: [], dueDate: '' });
       setToast('Task created successfully');
       setTimeout(() => setToast(''), 3000);
       await load();
@@ -354,16 +369,38 @@ export default function ProjectDetails() {
               <option value="high">High</option>
             </select>
           </div>
+          {(isSuperAdmin || isTenantAdmin) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+              <select
+                multiple
+                className="select"
+                value={form.assignedTo}
+                onChange={(e) => {
+                  const options = Array.from(e.target.selectedOptions).map(o => o.value);
+                  setForm({ ...form, assignedTo: options });
+                }}
+              >
+                {assignees.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.fullName} ({u.email})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Command to select multiple.</p>
+            </div>
+          )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assign To (User ID)
-            </label>
-            <input
-              className="input"
-              placeholder="Optional"
-              value={form.assignedTo}
-              onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="date"
+                className="input"
+                value={form.dueDate}
+                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+              />
+              <Button variant="ghost" onClick={() => setForm({ ...form, dueDate: '' })}>Clear</Button>
+            </div>
           </div>
           <div className="flex gap-3 justify-end pt-4">
             <Button variant="secondary" onClick={() => setShowModal(false)}>
