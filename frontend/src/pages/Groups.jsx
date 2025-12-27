@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../auth';
 import { TenantsAPI, UsersAPI } from '../api';
+import MainLayout from '../components/MainLayout';
+import {
+  PageHeader,
+  Button,
+  Toast,
+  EmptyState,
+} from '../components/UIComponents';
+import { Building2, Users as UsersIcon, Search, Filter, Trash2 } from 'lucide-react';
 
 export default function Groups() {
   const { user } = useAuth();
@@ -11,6 +19,7 @@ export default function Groups() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState('');
+  const [loading, setLoading] = useState(false);
   const isSuperAdmin = user?.role === 'super_admin';
   const isTenantAdmin = user?.role === 'tenant_admin';
 
@@ -29,18 +38,17 @@ export default function Groups() {
 
   const loadTenantUsers = async () => {
     if (!selectedTenantId) return;
+    setLoading(true);
     try {
       const query = { search, page, limit: 20 };
       const r = await UsersAPI.list(selectedTenantId, query);
       setTenantUsers(r.data?.data?.users || []);
       const pg = r.data?.data?.pagination;
-      if (pg) {
-        setTotalPages(pg.totalPages || 1);
-      } else {
-        setTotalPages(1);
-      }
+      setTotalPages(pg?.totalPages || 1);
     } catch (e) {
       console.error('Failed to load tenant users:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,7 +70,7 @@ export default function Groups() {
       if (confirm('Delete user?')) {
         await UsersAPI.remove(id);
         setToast('User deleted successfully');
-        setTimeout(()=>setToast(''), 2500);
+        setTimeout(() => setToast(''), 2500);
         await loadTenantUsers();
       }
     } catch (error) {
@@ -71,94 +79,191 @@ export default function Groups() {
   };
 
   if (!isSuperAdmin && !isTenantAdmin) {
-    return <div className="card">Access Denied</div>;
+    return (
+      <MainLayout>
+        <div className="card p-6">Access Denied</div>
+      </MainLayout>
+    );
   }
 
-  const currentTenant = tenants.find(t => t.id === selectedTenantId);
+  const currentTenant = tenants.find((t) => t.id === selectedTenantId);
 
   return (
-    <div>
-      <h2>Groups (Domains)</h2>
-      {toast && (<div className="card" style={{ background:'#e7f7ed', border:'1px solid #35a07d' }}>✅ {toast}</div>)}
-      {isSuperAdmin && <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>System-wide domain management — View and manage all domains and their members</p>}
-      {isTenantAdmin && <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>Your domain: <strong>{user?.tenant?.name}</strong> ({user?.tenant?.subdomain})</p>}
-      
-      <div className="stack" style={{ margin:'8px 0' }}>
-        {isSuperAdmin && (
-          <select className="select" value={selectedTenantId} onChange={e=>setSelectedTenantId(e.target.value)} style={{ flex: 1 }}>
-            <option value="">Select a domain</option>
-            {tenants.map(t => (
-              <option key={t.id} value={t.id}>{t.name} ({t.subdomain})</option>
-            ))}
-          </select>
-        )}
-        <input className="input" placeholder="Search members" value={search} onChange={e=>setSearch(e.target.value)} />
+    <MainLayout>
+      <PageHeader
+        title="Groups (Domains)"
+        subtitle={
+          isSuperAdmin
+            ? 'System-wide domain management — view and manage all domains and members'
+            : `Your domain: ${user?.tenant?.name || ''} (${user?.tenant?.subdomain || ''})`
+        }
+      />
+
+      {toast && <Toast message={toast} type="success" onClose={() => setToast('')} />}
+
+      {/* Filters bar */}
+      <div className="card p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {isSuperAdmin && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Select Domain</label>
+              <select
+                className="select"
+                value={selectedTenantId}
+                onChange={(e) => setSelectedTenantId(e.target.value)}
+              >
+                <option value="">Select a domain</option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.subdomain})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-gray-600 mb-1">Search Members</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                className="input pl-10"
+                placeholder="Search by name or email"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Domain summary */}
       {selectedTenantId && currentTenant && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', gap: 24 }}>
-            <div>
-              <div className="card-title">Domain Name</div>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>{currentTenant.name}</div>
+        <div className="card p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-primary-100 text-primary-700 rounded-xl flex items-center justify-center">
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <div className="card-title">Subdomain</div>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>{currentTenant.subdomain}</div>
+              <p className="text-sm text-gray-500">Domain</p>
+              <p className="text-lg font-semibold text-gray-900">{currentTenant.name}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <div className="text-xs text-gray-500">Subdomain</div>
+              <div className="text-sm font-medium text-gray-900">{currentTenant.subdomain}</div>
             </div>
             <div>
-              <div className="card-title">Plan</div>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>{currentTenant.subscriptionPlan}</div>
+              <div className="text-xs text-gray-500">Plan</div>
+              <div className="text-sm font-medium text-gray-900">{currentTenant.subscriptionPlan}</div>
             </div>
             <div>
-              <div className="card-title">Status</div>
+              <div className="text-xs text-gray-500">Status</div>
               <span className="badge">{currentTenant.status}</span>
             </div>
             <div>
-              <div className="card-title">Members</div>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>{currentTenant.totalUsers || 0}</div>
+              <div className="text-xs text-gray-500">Members</div>
+              <div className="text-sm font-medium text-gray-900">{currentTenant.totalUsers || 0}</div>
             </div>
           </div>
         </div>
       )}
 
-      <h3>Domain Members</h3>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tenantUsers.map(u => (
-            <tr key={u.id}>
-              <td>{u.fullName}</td>
-              <td>{u.email}</td>
-              <td><span className="badge">{u.role}</span></td>
-              <td>{u.isActive ? <span className="badge badge-success">Active</span> : <span className="badge">Inactive</span>}</td>
-              <td>
-                {isSuperAdmin || (isTenantAdmin && u.id !== user.id) ? (
-                  <button className="btn btn-danger" onClick={()=>removeUser(u.id)}>Delete</button>
-                ) : (
-                  <span className="text-muted">-</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      
-      {tenantUsers.length === 0 && <p className="text-muted" style={{ padding: 16 }}>No members found</p>}
-      
-      <div className="stack" style={{ alignItems:'center', gap:8, marginTop: 12 }}>
-        <button className="btn" disabled={page <= 1} onClick={()=>setPage(p => Math.max(1, p - 1))}>Prev</button>
-        <span>Page {page} of {totalPages}</span>
-        <button className="btn" disabled={page >= totalPages} onClick={()=>setPage(p => Math.min(totalPages, p + 1))}>Next</button>
+      {/* Members table */}
+      <div className="card overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-accent-100 text-accent-700 rounded-full flex items-center justify-center">
+              <UsersIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Domain Members</p>
+              <p className="text-lg font-semibold text-gray-900">{tenantUsers.length} users</p>
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="p-6 text-sm text-gray-500">Loading members...</div>
+        ) : tenantUsers.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              icon={UsersIcon}
+              title="No members found"
+              description="Try adjusting your search or select a different domain."
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead className="sticky top-0 bg-white shadow-sm">
+                <tr>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tenantUsers.map((u) => (
+                  <tr key={u.id}>
+                    <td>{u.fullName}</td>
+                    <td>{u.email}</td>
+                    <td>
+                      <span className="badge">{u.role}</span>
+                    </td>
+                    <td>
+                      {u.isActive ? (
+                        <span className="badge badge-success">Active</span>
+                      ) : (
+                        <span className="badge">Inactive</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="flex justify-end">
+                        {isSuperAdmin || (isTenantAdmin && u.id !== user.id) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Trash2}
+                            onClick={() => removeUser(u.id)}
+                            className="text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-center gap-3 mt-6">
+        <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          Prev
+        </Button>
+        <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={page >= totalPages}
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+        >
+          Next
+        </Button>
+      </div>
+    </MainLayout>
   );
 }

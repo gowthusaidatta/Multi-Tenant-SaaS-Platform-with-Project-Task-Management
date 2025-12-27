@@ -1,6 +1,6 @@
 import React from 'react';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './auth';
+import { Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './auth';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -10,57 +10,23 @@ import ProjectDetails from './pages/ProjectDetails';
 import Users from './pages/Users';
 import Tasks from './pages/Tasks';
 import Groups from './pages/Groups';
-
-function NavBar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  return (
-    <div className="navbar">
-      <div className="navbar-brand">GPP <span className="dot">●</span> SaaS</div>
-      {user && (
-        <div className="navbar-links">
-          <Link to="/dashboard">Dashboard</Link>
-          <Link to="/projects">Projects</Link>
-          <Link to="/tasks">Tasks</Link>
-          {['tenant_admin','super_admin'].includes(user.role) && <Link to="/groups">Groups</Link>}
-          {['tenant_admin','super_admin'].includes(user.role) && <Link to="/users">Users</Link>}
-        </div>
-      )}
-      <div className="navbar-right">
-        {user ? (
-          <>
-            <span className="text-muted">{user.fullName} ({user.role})</span>
-            <button className="btn" onClick={async () => { await logout(); navigate('/login'); }}>Logout</button>
-          </>
-        ) : (
-          <div className="stack">
-            <Link className="btn" to="/login">Login</Link>
-            <Link className="btn btn-primary" to="/register">Register</Link>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import Subscription from './pages/Subscription';
 
 export default function App() {
   return (
     <AuthProvider>
-      <NavBar />
-      <div className="container">
-        <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-          <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
-          <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-          <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-          <Route path="*" element={<Login />} />
-        </Routes>
-        <div className="footer">© 2025 GPP Multi‑Tenant SaaS Platform</div>
-      </div>
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+        <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
+        <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+        <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+        <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+        <Route path="*" element={<Login />} />
+      </Routes>
     </AuthProvider>
   );
 }
