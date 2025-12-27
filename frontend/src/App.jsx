@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Users from './pages/Users';
+import Tasks from './pages/Tasks';
+import Groups from './pages/Groups';
 
 function NavBar() {
   const { user, logout } = useAuth();
@@ -19,6 +21,8 @@ function NavBar() {
         <div className="navbar-links">
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/projects">Projects</Link>
+          <Link to="/tasks">Tasks</Link>
+          {['tenant_admin','super_admin'].includes(user.role) && <Link to="/groups">Groups</Link>}
           {['tenant_admin','super_admin'].includes(user.role) && <Link to="/users">Users</Link>}
         </div>
       )}
@@ -50,6 +54,8 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
           <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
+          <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+          <Route path="/groups" element={<ProtectedRoute><Groups /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="*" element={<Login />} />
         </Routes>

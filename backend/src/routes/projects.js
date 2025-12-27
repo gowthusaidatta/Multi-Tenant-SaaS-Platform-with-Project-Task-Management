@@ -9,17 +9,31 @@ const router = Router();
 
 // Create Project
 router.post('/projects', authMiddleware, async (req, res) => {
-  const me = req.user; // tenantId, userId
-  const { name, description, status = 'active' } = req.body || {};
+  const me = req.user; // tenantId, userId, role
+  const { name, description, status = 'active', tenantId: bodyTenantId } = req.body || {};
   if (!name) return badRequest(res, 'Name required');
-  const t = await query('SELECT max_projects FROM tenants WHERE id=$1', [me.tenantId]);
-  const c = await query('SELECT COUNT(*)::int AS c FROM projects WHERE tenant_id=$1', [me.tenantId]);
+
+  // Determine target tenant
+  let targetTenantId = me.tenantId;
+  if (me.role === 'super_admin') {
+    if (!bodyTenantId) return badRequest(res, 'tenantId is required for super admin');
+    // Validate tenant exists
+    const tExists = await query('SELECT id, max_projects FROM tenants WHERE id=$1', [bodyTenantId]);
+    if (tExists.rowCount === 0) return notFound(res, 'Target tenant not found');
+    targetTenantId = bodyTenantId;
+  }
+  if (!targetTenantId) return forbidden(res, 'Not authorized');
+
+  // Enforce subscription limits
+  const t = await query('SELECT max_projects FROM tenants WHERE id=$1', [targetTenantId]);
+  const c = await query('SELECT COUNT(*)::int AS c FROM projects WHERE tenant_id=$1', [targetTenantId]);
   if (c.rows[0].c >= t.rows[0].max_projects) return forbidden(res, 'Project limit reached');
+
   const id = uuidv4();
   await query('INSERT INTO projects(id, tenant_id, name, description, status, created_by) VALUES($1,$2,$3,$4,$5,$6)',
-    [id, me.tenantId, name, description || null, status, me.userId]);
-  await logAction({ tenantId: me.tenantId, userId: me.userId, action: 'CREATE_PROJECT', entityType: 'project', entityId: id });
-  return created(res, { id, tenantId: me.tenantId, name, description, status, createdBy: me.userId, createdAt: new Date().toISOString() });
+    [id, targetTenantId, name, description || null, status, me.userId]);
+  await logAction({ tenantId: targetTenantId, userId: me.userId, action: 'CREATE_PROJECT', entityType: 'project', entityId: id });
+  return created(res, { id, tenantId: targetTenantId, name, description, status, createdBy: me.userId, createdAt: new Date().toISOString() });
 });
 
 // List All Projects (super_admin only)
@@ -140,12 +154,15 @@ router.put('/projects/:projectId', authMiddleware, async (req, res) => {
   const p = await query('SELECT * FROM projects WHERE id=$1', [projectId]);
   if (p.rowCount === 0) return notFound(res, 'Project not found');
   const project = p.rows[0];
-  if (project.tenant_id !== me.tenantId) return forbidden(res, 'Not authorized');
-  if (!(me.role === 'tenant_admin' || project.created_by === me.userId)) return forbidden(res, 'Not authorized');
+  // Super admin can update any project; others limited to own tenant and admin/owner
+  if (me.role !== 'super_admin') {
+    if (project.tenant_id !== me.tenantId) return forbidden(res, 'Not authorized');
+    if (!(me.role === 'tenant_admin' || project.created_by === me.userId)) return forbidden(res, 'Not authorized');
+  }
   const { name, description, status } = req.body || {};
   await query('UPDATE projects SET name=COALESCE($1,name), description=COALESCE($2,description), status=COALESCE($3,status), updated_at=NOW() WHERE id=$4',
     [name || null, description || null, status || null, projectId]);
-  await logAction({ tenantId: me.tenantId, userId: me.userId, action: 'UPDATE_PROJECT', entityType: 'project', entityId: projectId });
+  await logAction({ tenantId: project.tenant_id, userId: me.userId, action: 'UPDATE_PROJECT', entityType: 'project', entityId: projectId });
   return ok(res, { id: projectId, name, description, status, updatedAt: new Date().toISOString() }, 'Project updated successfully');
 });
 
@@ -156,10 +173,15 @@ router.delete('/projects/:projectId', authMiddleware, async (req, res) => {
   const p = await query('SELECT * FROM projects WHERE id=$1', [projectId]);
   if (p.rowCount === 0) return notFound(res, 'Project not found');
   const project = p.rows[0];
-  if (project.tenant_id !== me.tenantId) return forbidden(res, 'Not authorized');
-  if (!(me.role === 'tenant_admin' || project.created_by === me.userId)) return forbidden(res, 'Not authorized');
+
+  // Super admin can delete any project
+  if (me.role !== 'super_admin') {
+    if (project.tenant_id !== me.tenantId) return forbidden(res, 'Not authorized');
+    if (!(me.role === 'tenant_admin' || project.created_by === me.userId)) return forbidden(res, 'Not authorized');
+  }
+
   await query('DELETE FROM projects WHERE id=$1', [projectId]);
-  await logAction({ tenantId: me.tenantId, userId: me.userId, action: 'DELETE_PROJECT', entityType: 'project', entityId: projectId });
+  await logAction({ tenantId: project.tenant_id, userId: me.userId, action: 'DELETE_PROJECT', entityType: 'project', entityId: projectId });
   return ok(res, null, 'Project deleted successfully');
 });
 

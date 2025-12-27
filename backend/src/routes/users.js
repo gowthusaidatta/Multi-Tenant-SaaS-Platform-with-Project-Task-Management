@@ -85,7 +85,10 @@ router.get('/users/all', authMiddleware, async (req, res) => {
 router.post('/tenants/:tenantId/users', authMiddleware, async (req, res) => {
   const { tenantId } = req.params;
   const me = req.user;
-  if (me.role !== 'tenant_admin' || me.tenantId !== tenantId) return forbidden(res, 'Not authorized');
+  // Allow super admin to create users in any tenant, and tenant_admin within own tenant
+  const isTenantAdminAllowed = me.role === 'tenant_admin' && me.tenantId === tenantId;
+  const isSuperAdminAllowed = me.role === 'super_admin';
+  if (!isTenantAdminAllowed && !isSuperAdminAllowed) return forbidden(res, 'Not authorized');
   const { email, password, fullName, role = 'user' } = req.body || {};
   if (!email || !password || !fullName) return badRequest(res, 'Missing fields');
   if (!['user', 'tenant_admin'].includes(role)) return badRequest(res, 'Invalid role');
@@ -163,7 +166,10 @@ router.delete('/users/:userId', authMiddleware, async (req, res) => {
   if (u.rowCount === 0) return notFound(res, 'User not found');
   if (me.userId === userId) return forbidden(res, 'Cannot delete yourself');
   const tenantId = u.rows[0].tenant_id;
-  if (me.role !== 'tenant_admin' || me.tenantId !== tenantId) return forbidden(res, 'Not authorized');
+  // Super admin can delete any user; tenant_admin limited to own tenant
+  const isTenantAdminAllowed = me.role === 'tenant_admin' && me.tenantId === tenantId;
+  const isSuperAdminAllowed = me.role === 'super_admin';
+  if (!isTenantAdminAllowed && !isSuperAdminAllowed) return forbidden(res, 'Not authorized');
   await query('UPDATE tasks SET assigned_to = NULL WHERE assigned_to=$1', [userId]);
   await query('DELETE FROM users WHERE id=$1', [userId]);
   await logAction({ tenantId, userId: me.userId, action: 'DELETE_USER', entityType: 'user', entityId: userId });

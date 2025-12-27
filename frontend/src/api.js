@@ -37,6 +37,7 @@ export const AuthAPI = {
 export const TenantsAPI = {
   get: (tenantId) => api.get(`/tenants/${tenantId}`),
   list: (params) => api.get('/tenants', { params }),
+  create: (payload) => api.post('/tenants', payload),
   update: (tenantId, payload) => api.put(`/tenants/${tenantId}`, payload),
 };
 
@@ -59,6 +60,7 @@ export const ProjectsAPI = {
 export const TasksAPI = {
   list: (projectId, params) => api.get(`/projects/${projectId}/tasks`, { params }),
   listAll: (params) => api.get('/tasks/all', { params }), // super_admin: list all tasks across all tenants
+  listAllForProject: (params) => api.get('/projects/:projectId/tasks', { params }), // list tenant's tasks
   create: (projectId, payload) => api.post(`/projects/${projectId}/tasks`, payload),
   update: (taskId, payload) => api.put(`/tasks/${taskId}`, payload),
   updateStatus: (taskId, status) => api.patch(`/tasks/${taskId}/status`, { status }),

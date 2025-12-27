@@ -1,28 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ProjectsAPI, TasksAPI } from '../api';
+import { useAuth } from '../auth';
 
 export default function ProjectDetails() {
   const { projectId } = useParams();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState({ status: '', priority: '', search: '' });
   const [showModal, setShowModal] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '' });
+  const [toast, setToast] = useState('');
 
   const load = async () => {
-    // naive: get list and find project
-    const pr = await ProjectsAPI.list({});
+    // load project depending on role
+    const pr = isSuperAdmin ? await ProjectsAPI.listAll({ limit: 50 }) : await ProjectsAPI.list({});
     const p = (pr.data.data.projects || []).find(x => x.id === projectId);
     setProject(p);
     const tr = await TasksAPI.list(projectId, filter);
     setTasks(tr.data.data.tasks || []);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [projectId, isSuperAdmin]);
 
   const updateProject = async () => {
-    await ProjectsAPI.update(projectId, { name: project.name, description: project.description, status: project.status });
-    await load();
+    try {
+      await ProjectsAPI.update(projectId, { name: project.name, description: project.description, status: project.status });
+      setEditMode(false);
+      setToast('Project updated successfully');
+      setTimeout(()=>setToast(''), 2500);
+      await load();
+    } catch (e) {
+      alert(e.response?.data?.message || 'Failed to update project');
+    }
   };
   const addTask = async () => {
     await TasksAPI.create(projectId, { title: form.title, description: form.description, priority: form.priority, assignedTo: form.assignedTo || null });
@@ -38,20 +50,63 @@ export default function ProjectDetails() {
   return (
     <div>
       <h2>Project Details</h2>
+      {toast && (<div className="card" style={{ background:'#e7f7ed', border:'1px solid #35a07d' }}>✅ {toast}</div>)}
       <div className="card">
-        <label>Name</label>
-        <input className="input" value={project.name} onChange={e => setProject({ ...project, name: e.target.value })} />
-        <label>Status</label>
-        <select className="select" value={project.status} onChange={e => setProject({ ...project, status: e.target.value })}>
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
-          <option value="completed">Completed</option>
-        </select>
-        <label>Description</label>
-        <textarea className="input" rows={3} value={project.description||''} onChange={e => setProject({ ...project, description: e.target.value })} />
-        <div className="stack" style={{ marginTop:8 }}>
-          <button className="btn btn-primary" onClick={updateProject}>Save</button>
-          <button className="btn" onClick={()=>setShowModal(true)}>Add Task</button>
+        {!editMode ? (
+          // View Mode
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 4 }}>Project Name</div>
+              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>{project.name}</div>
+              <span className="badge" style={{ marginRight: 8 }}>{project.status}</span>
+              <span className="badge" style={{ marginRight: 8 }}>By: {project.createdBy.fullName}</span>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 4 }}>Description</div>
+              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{project.description || 'No description'}</div>
+            </div>
+            <div className="stack">
+              <button className="btn btn-primary" onClick={()=>setEditMode(true)}>Edit Project</button>
+              <button className="btn" onClick={()=>window.history.back()}>Close</button>
+            </div>
+          </>
+        ) : (
+          // Edit Mode
+          <>
+            <label>Project Name</label>
+            <input className="input" value={project.name} onChange={e => setProject({ ...project, name: e.target.value })} />
+            <label>Status</label>
+            <select className="select" value={project.status} onChange={e => setProject({ ...project, status: e.target.value })}>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+              <option value="completed">Completed</option>
+            </select>
+            <label>Description</label>
+            <textarea className="input" rows={4} value={project.description||''} onChange={e => setProject({ ...project, description: e.target.value })} />
+            <div className="stack" style={{ marginTop:12 }}>
+              <button className="btn btn-primary" onClick={updateProject}>Save Changes</button>
+              <button className="btn" onClick={()=>setEditMode(false)}>Cancel</button>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="spacer"></div>
+      <div className="grid-4">
+        <div className="card">
+          <div className="card-title">Total Tasks</div>
+          <div className="card-value">{tasks.length}</div>
+        </div>
+        <div className="card">
+          <div className="card-title">Completed</div>
+          <div className="card-value" style={{ color: 'var(--success)' }}>{tasks.filter(t => t.status === 'completed').length}</div>
+        </div>
+        <div className="card">
+          <div className="card-title">In Progress</div>
+          <div className="card-value" style={{ color: 'var(--warning)' }}>{tasks.filter(t => t.status === 'in_progress').length}</div>
+        </div>
+        <div className="card">
+          <div className="card-title">Todo</div>
+          <div className="card-value">{tasks.filter(t => t.status === 'todo').length}</div>
         </div>
       </div>
       <div className="spacer"></div>
@@ -71,6 +126,7 @@ export default function ProjectDetails() {
         </select>
         <input className="input" placeholder="Search title" value={filter.search} onChange={e=>setFilter({...filter, search:e.target.value})} />
         <button className="btn" onClick={load}>Apply</button>
+        <button className="btn btn-primary right" onClick={()=>setShowModal(true)}>Add Task</button>
       </div>
       <ul className="item-list">
         {tasks.map(t => (

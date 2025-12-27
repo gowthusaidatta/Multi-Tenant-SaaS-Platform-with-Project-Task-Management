@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
-import { ok, notFound, forbidden, badRequest } from '../utils/responses.js';
+import { ok, notFound, forbidden, badRequest, created, conflict } from '../utils/responses.js';
 import { query } from '../db.js';
 import { logAction } from '../utils/logger.js';
+import { v4 as uuidv4 } from 'uuid';
+import { config, PLAN_LIMITS } from '../config.js';
+import { isValidSubdomain } from '../utils/validation.js';
 
 const router = Router();
 
@@ -96,3 +99,24 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 export default router;
+
+// Create Tenant (super_admin only)
+router.post('/', authMiddleware, async (req, res) => {
+  const me = req.user;
+  if (me.role !== 'super_admin') return forbidden(res, 'Not super_admin');
+  const { name, subdomain, subscriptionPlan = 'free', status = 'active', maxUsers = undefined, maxProjects = undefined } = req.body || {};
+  if (!name || typeof name !== 'string' || name.trim().length === 0) return badRequest(res, 'Name required');
+  if (!subdomain || !isValidSubdomain(String(subdomain).toLowerCase())) return badRequest(res, 'Invalid subdomain');
+  const exist = await query('SELECT 1 FROM tenants WHERE subdomain=$1', [String(subdomain).toLowerCase()]);
+  if (exist.rowCount) return conflict(res, 'Subdomain already exists');
+  const id = uuidv4();
+  const limits = PLAN_LIMITS[subscriptionPlan] || PLAN_LIMITS['free'];
+  const finalMaxUsers = typeof maxUsers === 'number' ? maxUsers : limits.max_users;
+  const finalMaxProjects = typeof maxProjects === 'number' ? maxProjects : limits.max_projects;
+  await query(
+    'INSERT INTO tenants(id, name, subdomain, status, subscription_plan, max_users, max_projects) VALUES($1,$2,$3,$4,$5,$6,$7)',
+    [id, name, String(subdomain).toLowerCase(), status, subscriptionPlan, finalMaxUsers, finalMaxProjects]
+  );
+  await logAction({ tenantId: id, userId: me.userId, action: 'CREATE_TENANT', entityType: 'tenant', entityId: id });
+  return created(res, { id, name, subdomain: String(subdomain).toLowerCase(), status, subscriptionPlan, maxUsers: finalMaxUsers, maxProjects: finalMaxProjects }, 'Tenant created');
+});

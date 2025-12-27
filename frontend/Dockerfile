@@ -6,11 +6,8 @@ FROM node:20-alpine as builder
 WORKDIR /app
 COPY package.json ./
 RUN npm install
-COPY index.html vite.config.js ./
-# Copy both env files - will use the Docker version in Docker network
-COPY .env ./
-COPY .env.development ./
-COPY src ./src
+# Copy full project (includes index.html, vite config, envs, src)
+COPY . .
 RUN npm run build
 
 # Runtime stage - use lightweight httpserver

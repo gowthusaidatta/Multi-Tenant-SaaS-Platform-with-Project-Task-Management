@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../auth';
-import { ProjectsAPI, TasksAPI, UsersAPI } from '../api';
+import { ProjectsAPI, TasksAPI, UsersAPI, TenantsAPI } from '../api';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -8,6 +8,9 @@ export default function Dashboard() {
   const [recent, setRecent] = useState([]);
   const [myTasks, setMyTasks] = useState([]);
   const isSuperAdmin = user?.role === 'super_admin';
+  const [showTenantModal, setShowTenantModal] = useState(false);
+  const [tenantForm, setTenantForm] = useState({ name: '', subdomain: '', subscriptionPlan: 'free', status: 'active' });
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -58,6 +61,12 @@ export default function Dashboard() {
     <div>
       <h2>Dashboard</h2>
       {isSuperAdmin && <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>📊 System-wide overview - You have view access to all tenants, users, projects, and tasks</p>}
+      {toast && (<div className="card" style={{ background:'#e7f7ed', border:'1px solid #35a07d' }}>✅ {toast}</div>)}
+      {isSuperAdmin && (
+        <div className="stack" style={{ marginBottom: 12 }}>
+          <button className="btn btn-primary" onClick={()=>setShowTenantModal(true)}>Create Tenant</button>
+        </div>
+      )}
       <div className="grid-4">
         {isSuperAdmin ? (
           <>
@@ -104,6 +113,42 @@ export default function Dashboard() {
             )}
           </ul>
         </>
+      )}
+      {showTenantModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <div className="modal-header"><h3>Create Tenant</h3><button className="btn" onClick={()=>setShowTenantModal(false)}>✕</button></div>
+            <label>Name</label>
+            <input className="input" value={tenantForm.name} onChange={e=>setTenantForm({ ...tenantForm, name:e.target.value })} />
+            <label>Subdomain</label>
+            <input className="input" value={tenantForm.subdomain} onChange={e=>setTenantForm({ ...tenantForm, subdomain:e.target.value })} />
+            <label>Plan</label>
+            <select className="select" value={tenantForm.subscriptionPlan} onChange={e=>setTenantForm({ ...tenantForm, subscriptionPlan:e.target.value })}>
+              <option value="free">Free</option>
+              <option value="pro">Pro</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+            <label>Status</label>
+            <select className="select" value={tenantForm.status} onChange={e=>setTenantForm({ ...tenantForm, status:e.target.value })}>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+            </select>
+            <div className="modal-actions">
+              <button className="btn" onClick={()=>setShowTenantModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={async ()=>{
+                try {
+                  if (!tenantForm.name || !tenantForm.subdomain) { alert('Name and subdomain required'); return; }
+                  await TenantsAPI.create(tenantForm);
+                  setShowTenantModal(false);
+                  setToast('Tenant created successfully');
+                  setTimeout(()=>setToast(''), 2500);
+                } catch (e) {
+                  alert(e.response?.data?.message || 'Failed to create tenant');
+                }
+              }}>Save</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
