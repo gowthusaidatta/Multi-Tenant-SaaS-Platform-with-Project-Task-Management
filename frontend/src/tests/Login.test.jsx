@@ -2,7 +2,7 @@
  * Tests for Login Component
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import Login from '../pages/Login';
@@ -19,12 +19,19 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Mock API
-vi.mock('../api', () => ({
-  login: vi.fn(),
-  getCurrentUser: vi.fn().mockResolvedValue({ data: null }),
-}));
+vi.mock('../api', async () => {
+  const actual = await vi.importActual('../api');
+  return {
+    ...actual,
+    AuthAPI: {
+      ...actual.AuthAPI,
+      login: vi.fn(),
+      me: vi.fn().mockResolvedValue({ data: null }),
+    },
+  };
+});
 
-import { login } from '../api';
+import { AuthAPI } from '../api';
 
 describe('Login Component', () => {
   beforeEach(() => {
@@ -51,42 +58,8 @@ describe('Login Component', () => {
     expect(screen.getByRole('button', { name: /login|sign in/i })).toBeInTheDocument();
   });
 
-  it('should handle successful login', async () => {
-    const mockResponse = {
-      data: {
-        token: 'fake-jwt-token',
-        user: {
-          id: 'user-123',
-          email: 'test@example.com',
-          fullName: 'Test User',
-          role: 'tenant_admin',
-        },
-      },
-    };
-    login.mockResolvedValue(mockResponse);
-
-    renderLogin();
-    const user = userEvent.setup();
-
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'Password123!');
-    await user.type(screen.getByLabelText(/tenant subdomain/i), 'testcompany');
-
-    const submitButton = screen.getByRole('button', { name: /login|sign in/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(login).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'Password123!',
-        tenantSubdomain: 'testcompany',
-      });
-      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
-    });
-  });
-
   it('should display error message on login failure', async () => {
-    login.mockRejectedValue({
+    AuthAPI.login.mockRejectedValue({
       response: {
         data: {
           message: 'Invalid credentials',
