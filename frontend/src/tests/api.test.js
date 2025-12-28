@@ -5,7 +5,22 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import axios from 'axios';
 import { login, registerTenant, getCurrentUser, getProjects, createProject } from '../api';
 
-vi.mock('axios');
+// Mock axios with a complete implementation
+vi.mock('axios', () => {
+  const mockAxios = {
+    create: vi.fn(() => ({
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() },
+      },
+    })),
+    post: vi.fn(),
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  };
+  return { default: mockAxios };
+});
 
 describe('API Module', () => {
   beforeEach(() => {

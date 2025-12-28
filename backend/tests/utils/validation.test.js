@@ -8,7 +8,7 @@ import {
   validateSubdomain,
   validateUUID,
   validateEnum,
-} from '../src/utils/validation.js';
+} from '../../src/utils/validation.js';
 
 describe('Validation Utilities', () => {
   describe('validateEmail', () => {

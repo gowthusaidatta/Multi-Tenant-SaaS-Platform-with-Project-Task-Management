@@ -2,7 +2,7 @@
  * Unit Tests for Response Utilities
  */
 import { describe, it, expect, jest } from '@jest/globals';
-import { success, created, error, notFound, unauthorized, forbidden, conflict } from '../src/utils/responses.js';
+import { success, created, error, notFound, unauthorized, forbidden, conflict } from '../../src/utils/responses.js';
 
 describe('Response Utilities', () => {
   let res;

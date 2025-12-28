@@ -3,8 +3,8 @@
  */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import jwt from 'jsonwebtoken';
-import { authMiddleware, requireRole } from '../src/middleware/auth.js';
-import { config } from '../src/config.js';
+import { authMiddleware, requireRole } from '../../src/middleware/auth.js';
+import { config } from '../../src/config.js';
 
 describe('Authentication Middleware', () => {
   let req, res, next;

@@ -22,4 +22,5 @@ app.use('/api', taskRoutes);
 
 app.use(errorHandler);
 
+export { app };
 export default app;

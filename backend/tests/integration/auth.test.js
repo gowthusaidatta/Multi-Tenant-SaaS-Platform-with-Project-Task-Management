@@ -3,8 +3,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import request from 'supertest';
-import { app } from '../src/app.js';
-import { db } from '../src/db.js';
+import { app } from '../../src/app.js';
+import { db } from '../../src/db.js';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 

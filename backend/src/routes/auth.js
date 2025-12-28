@@ -6,7 +6,7 @@ import { config, PLAN_LIMITS } from '../config.js';
 import { getClient, query } from '../db.js';
 import { ok, created, badRequest, conflict, unauthorized, forbidden, notFound } from '../utils/responses.js';
 import { logAction } from '../utils/logger.js';
-import { isValidSubdomain, isValidEmail, validatePassword, isValidFullName } from '../utils/validation.js';
+import { isValidSubdomain, isValidEmail, validatePasswordDetailed, isValidFullName } from '../utils/validation.js';
 
 const router = Router();
 
@@ -31,7 +31,7 @@ router.post('/register-tenant', async (req, res) => {
   if (!adminPassword) {
     return badRequest(res, 'Password is required');
   }
-  const pwValidation = validatePassword(adminPassword);
+  const pwValidation = validatePasswordDetailed(adminPassword);
   if (!pwValidation.valid) {
     return badRequest(res, pwValidation.error);
   }
@@ -165,13 +165,20 @@ router.get('/me', async (req, res) => {
 // POST /api/auth/logout
 router.post('/logout', async (req, res) => {
   const header = req.headers['authorization'] || '';
-  const [, token] = header.split(' ');
+  const [scheme, token] = header.split(' ');
+  
+  // Require valid Bearer token
+  if (scheme !== 'Bearer' || !token) {
+    return unauthorized(res, 'Token missing');
+  }
+  
   try {
-    if (token) {
-      const payload = jwt.verify(token, config.jwt.secret);
-      await logAction({ tenantId: payload.tenantId || null, userId: payload.userId, action: 'LOGOUT', entityType: 'user', entityId: payload.userId });
-    }
-  } catch {}
+    const payload = jwt.verify(token, config.jwt.secret);
+    await logAction({ tenantId: payload.tenantId || null, userId: payload.userId, action: 'LOGOUT', entityType: 'user', entityId: payload.userId });
+  } catch {
+    return unauthorized(res, 'Token invalid or expired');
+  }
+  
   return ok(res, null, 'Logged out successfully');
 });
 

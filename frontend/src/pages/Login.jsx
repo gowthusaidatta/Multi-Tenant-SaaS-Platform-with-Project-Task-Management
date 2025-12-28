@@ -42,7 +42,7 @@ export default function Login() {
           <form onSubmit={submit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <div className="relative">
@@ -50,6 +50,7 @@ export default function Login() {
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  id="email"
                   type="email"
                   required
                   className="input pl-10"
@@ -63,7 +64,7 @@ export default function Login() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -71,6 +72,7 @@ export default function Login() {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  id="password"
                   type="password"
                   required
                   className="input pl-10"
@@ -84,7 +86,7 @@ export default function Login() {
 
             {/* Tenant Subdomain */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="tenantSubdomain" className="block text-sm font-medium text-gray-700 mb-2">
                 Tenant Subdomain{' '}
                 <span className="text-xs text-gray-500">(omit for Super Admin)</span>
               </label>
@@ -93,6 +95,7 @@ export default function Login() {
                   <Building2 className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  id="tenantSubdomain"
                   type="text"
                   className="input pl-10"
                   placeholder="your-company"

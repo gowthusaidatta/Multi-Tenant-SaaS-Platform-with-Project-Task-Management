@@ -3,11 +3,11 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import request from 'supertest';
-import { app } from '../src/app.js';
-import { db } from '../src/db.js';
+import { app } from '../../src/app.js';
+import { db } from '../../src/db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { config } from '../src/config.js';
+import { config } from '../../src/config.js';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('Project API Integration Tests', () => {
