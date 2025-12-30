@@ -1,0 +1,149 @@
+{
+  "info": {
+    "name": "Multi-Tenant SaaS - Projects & Tasks",
+    "_postman_id": "c7e2f3b0-1d6a-4d0b-8c36-collection-demo",
+    "description": "Postman collection to login, create a project, add a task, update status, and edit task via backend APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "adminEmail", "value": "admin@demo.com" },
+    { "key": "adminPassword", "value": "Demo@123" },
+    { "key": "tenantSubdomain", "value": "demo" },
+    { "key": "token", "value": "" },
+    { "key": "projectId", "value": "" },
+    { "key": "taskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth • Login (sets token)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"tenantSubdomain\": \"{{tenantSubdomain}}\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.token) {",
+              "  pm.collectionVariables.set('token', json.data.token);",
+              "  pm.test('JWT captured', function () { pm.expect(pm.collectionVariables.get('token')).to.exist; });",
+              "} else {",
+              "  pm.test('Token not found', function () { pm.expect(false).to.be.true; });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects • Create (sets projectId)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Website Redesign Project\",\n  \"description\": \"Complete redesign of company website\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.id) {",
+              "  pm.collectionVariables.set('projectId', json.data.id);",
+              "  pm.test('projectId captured', function () { pm.expect(pm.collectionVariables.get('projectId')).to.exist; });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks • Create (sets taskId)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/tasks", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "tasks"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Design homepage mockup\",\n  \"description\": \"Create high-fidelity design\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2026-01-03\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.id) {",
+              "  pm.collectionVariables.set('taskId', json.data.id);",
+              "  pm.test('taskId captured', function () { pm.expect(pm.collectionVariables.get('taskId')).to.exist; });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks • Update Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/status", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "status"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"in_progress\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tasks • Update Details",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Homepage UI mockups\",\n  \"description\": \"Update layout variants\",\n  \"priority\": \"medium\"\n}"
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [ { "key": "token", "value": "{{token}}" } ]
+  }
+}
