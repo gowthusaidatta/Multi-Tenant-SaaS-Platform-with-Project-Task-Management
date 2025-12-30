@@ -12,16 +12,8 @@ A production-ready, multi-tenant SaaS application where multiple organizations (
 
 The platform is fully dockerized and can be started with a single command for automated evaluation.
 
-## 🚀 Live Demo & Deployment Status
+##  Table of Contents
 
-- **Frontend (Vercel)**: https://frontend-six-gamma-78.vercel.app ✅ **Live**
-- **Backend**: Runs via Docker - Use `docker-compose up -d` to start locally
-- **Full Stack**: Frontend + Backend both work via Docker Compose ✅
-- **Note**: Backend cloud deployment encountered free tier limits on Railway/Render. Docker deployment works perfectly for evaluation.
-
-## 📋 Table of Contents
-
-- [Target Audience](#target-audience)
 - [Key Features](#key-features)
 - [Multi-Tenancy Model](#multi-tenancy-model)
 - [Technology Stack](#technology-stack)
@@ -33,13 +25,6 @@ The platform is fully dockerized and can be started with a single command for au
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
-
-## Target Audience
-
-- Small to mid-sized organizations managing internal projects and teams
-- SaaS startups requiring strict tenant-isolated architectures
-- Enterprises needing role-based access, audit logging, and scalable design
-
 
 ## Key Features
 - Multi-tenancy with strict `tenant_id`-based data isolation
@@ -131,20 +116,6 @@ All required environment variables are defined **either directly in `docker-comp
 - `PORT`
 - `NODE_ENV`
 - `FRONTEND_URL`
-
-### Frontend
-- `VITE_API_URL` (or `REACT_APP_API_URL`)
-
-> In the Docker network, services communicate using service names:
-> `database`, `backend`, and `frontend` (not `localhost`).
-
-
-## Verified Setup
-
-This project has been tested on Ubuntu 24.04 with:
-
-- Docker 28.x
-- Docker Compose v2+
 
 ### Clean Start
 
@@ -392,19 +363,6 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for de
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-
-## Acknowledgments
-
-- Built as part of the Partnr GPP (Global Practical Program)
-- Special thanks to the open-source community for the amazing tools and libraries
-
-
-## Development Notes
-
-* Repository contains 30+ meaningful commits showing incremental development
-* All authorization, tenant isolation, and subscription limits are enforced server-side
-* Frontend routes are protected and role-aware
-* No production secrets are used (test/development values only)
 
 ---
 
