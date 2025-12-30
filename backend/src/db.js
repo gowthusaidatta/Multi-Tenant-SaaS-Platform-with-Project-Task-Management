@@ -68,3 +68,13 @@ export const getClient = () => pool.connect();
 export const ensureConnection = async () => {
   await query('SELECT 1');
 };
+
+/**
+ * Database object for test compatibility
+ * Provides named export expected by integration tests
+ */
+export const db = {
+  query,
+  connect: getClient,
+  end: () => pool.end(),
+};

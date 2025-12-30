@@ -62,7 +62,7 @@
   <rect x="70" y="360" width="70" height="30" class="external" rx="3"/>
   <text x="105" y="380" text-anchor="middle" class="label">Docker</text>
   <rect x="150" y="360" width="70" height="30" class="external" rx="3"/>
-  <text x="185" y="380" text-anchor="middle" class="label">Hosting</text>
+  <text x="185" y="380" text-anchor="middle" class="label">Vercel</text>
   
   <!-- Arrows -->
   <!-- Frontend to API -->
@@ -85,8 +85,8 @@
   <path d="M 105 320 L 350 250" class="arrow"/>
   <path d="M 105 320 L 600 420" class="arrow"/>
   
-  <!-- Hosting to Frontend -->
-  <!-- Removed arrow previously referring to external hosting -->
+  <!-- Vercel to Frontend -->
+  <path d="M 185 320 L 150 220" class="arrow"/>
   
   <!-- Notes -->
   <rect x="50" y="550" width="280" height="70" class="note" rx="5"/>
@@ -108,6 +108,6 @@
   <text x="50" y="660" class="label" font-weight="bold">Technology Stack:</text>
   <text x="50" y="680" class="label">Frontend: React 18, Vite 5, React Router 6</text>
   <text x="50" y="695" class="label">Backend: Node.js 20, Express.js 4, PostgreSQL 15</text>
-  <text x="50" y="710" class="label">DevOps: Docker, Docker Compose</text>
+  <text x="50" y="710" class="label">DevOps: Docker, Docker Compose, Vercel</text>
   <text x="50" y="725" class="label">Authentication: JWT, bcrypt</text>
 </svg>

@@ -15,18 +15,42 @@ export function isValidEmail(email) {
   return emailRegex.test(String(email).toLowerCase());
 }
 
+// Test-friendly boolean validation alias
+export function validateEmail(email) {
+  return isValidEmail(email);
+}
+
 /**
  * Validates password strength
  * Requirements: minimum 8 characters, at least one uppercase, one lowercase, one number
  * @param {string} password - Password to validate
  * @returns {object} { valid: boolean, error?: string }
  */
+// Base password strength checker used by both API logic and tests
+function hasStrongPassword(password) {
+  if (!password || typeof password !== 'string') return false;
+  const lengthOk = password.length >= 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  return lengthOk && hasUpper && hasLower && hasNumber && hasSpecial;
+}
+
+// Boolean interface expected by unit tests
 export function validatePassword(password) {
+  return hasStrongPassword(password);
+}
+
+// Detailed interface used by API routes for richer error messaging
+export function validatePasswordDetailed(password) {
   if (!password) return { valid: false, error: 'Password is required' };
-  if (password.length < 8) return { valid: false, error: 'Password must be at least 8 characters' };
-  if (!/[A-Z]/.test(password)) return { valid: false, error: 'Password must contain at least one uppercase letter' };
-  if (!/[a-z]/.test(password)) return { valid: false, error: 'Password must contain at least one lowercase letter' };
-  if (!/\d/.test(password)) return { valid: false, error: 'Password must contain at least one digit' };
+  if (!hasStrongPassword(password)) {
+    return {
+      valid: false,
+      error: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character',
+    };
+  }
   return { valid: true };
 }
 
@@ -37,10 +61,17 @@ export function validatePassword(password) {
  * @returns {boolean} True if valid subdomain format
  */
 export function isValidSubdomain(subdomain) {
-  if (!subdomain) return false;
-  if (subdomain.length < 3 || subdomain.length > 63) return false;
+  if (!subdomain || typeof subdomain !== 'string') return false;
+  const lower = subdomain.toLowerCase();
+  if (lower.length < 3 || lower.length > 63) return false;
   const re = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
-  return re.test(String(subdomain).toLowerCase());
+  // Also reject if original subdomain has uppercase (strict lowercase validation)
+  if (subdomain !== lower) return false;
+  return re.test(lower);
+}
+
+export function validateSubdomain(subdomain) {
+  return isValidSubdomain(subdomain);
 }
 
 /**
@@ -121,6 +152,16 @@ export function isValidTenantStatus(status) {
   return ['active', 'suspended', 'trial'].includes(status);
 }
 
+export function validateUUID(value) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return typeof value === 'string' && uuidRegex.test(value);
+}
+
+export function validateEnum(value, allowed = []) {
+  if (!Array.isArray(allowed) || allowed.length === 0) return false;
+  return allowed.includes(value);
+}
+
 /**
  * Validates date format (YYYY-MM-DD)
  * @param {string} dateStr - Date string to validate
@@ -132,16 +173,4 @@ export function isValidDate(dateStr) {
   if (!dateRegex.test(dateStr)) return false;
   const date = new Date(dateStr);
   return !isNaN(date.getTime());
-}
-
-/**
- * Validates UUID v4 format
- * @param {string} id - UUID to validate
- * @returns {boolean} True if valid UUID
- */
-export function isValidUUID(id) {
-  if (!id || typeof id !== 'string') return false;
-  // Accept standard UUID v4 format (lower/upper-case hex)
-  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  return uuidRegex.test(id);
 }

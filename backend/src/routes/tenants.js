@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
-import { ok, notFound, forbidden, badRequest, conflict } from '../utils/responses.js';
+import { ok, notFound, forbidden, badRequest, created, conflict } from '../utils/responses.js';
 import { query } from '../db.js';
 import { logAction } from '../utils/logger.js';
-import { isValidUUID, isValidSubdomain } from '../utils/validation.js';
+import { v4 as uuidv4 } from 'uuid';
+import { config, PLAN_LIMITS } from '../config.js';
+import { isValidSubdomain } from '../utils/validation.js';
 
 const router = Router();
 
@@ -11,7 +13,6 @@ const router = Router();
 router.get('/:tenantId', authMiddleware, async (req, res) => {
   const { tenantId } = req.params;
   const me = req.user;
-  if (!isValidUUID(tenantId)) return badRequest(res, 'Invalid tenant ID');
   if (me.role !== 'super_admin' && me.tenantId !== tenantId) return forbidden(res, 'Unauthorized access');
   const t = await query('SELECT * FROM tenants WHERE id=$1', [tenantId]);
   if (t.rowCount === 0) return notFound(res, 'Tenant not found');
@@ -40,7 +41,6 @@ router.put('/:tenantId', authMiddleware, async (req, res) => {
   const { tenantId } = req.params;
   const me = req.user;
   const updates = req.body || {};
-  if (!isValidUUID(tenantId)) return badRequest(res, 'Invalid tenant ID');
   if (me.role !== 'super_admin' && me.tenantId !== tenantId) return forbidden(res, 'Unauthorized access');
   if (me.role !== 'super_admin') {
     // tenant_admin can only update name
@@ -50,19 +50,13 @@ router.put('/:tenantId', authMiddleware, async (req, res) => {
     return ok(res, { id: tenantId, name: allowed.name, updatedAt: new Date().toISOString() }, 'Tenant updated successfully');
   }
   // super_admin full update
-  const { name, status, subscriptionPlan, maxUsers, maxProjects, subdomain } = updates;
-  if (subdomain !== undefined) {
-    if (!subdomain || !isValidSubdomain(subdomain)) return badRequest(res, 'Invalid subdomain');
-    // Enforce uniqueness
-    const exists = await query('SELECT 1 FROM tenants WHERE LOWER(subdomain)=LOWER($1) AND id<>$2', [subdomain, tenantId]);
-    if (exists.rowCount > 0) return conflict(res, 'Subdomain already in use');
-  }
+  const { name, status, subscriptionPlan, maxUsers, maxProjects } = updates;
   await query(
-    'UPDATE tenants SET name=COALESCE($1,name), status=COALESCE($2,status), subscription_plan=COALESCE($3,subscription_plan), max_users=COALESCE($4,max_users), max_projects=COALESCE($5,max_projects), subdomain=COALESCE($6,subdomain), updated_at=NOW() WHERE id=$7',
-    [name || null, status || null, subscriptionPlan || null, maxUsers || null, maxProjects || null, subdomain || null, tenantId]
+    'UPDATE tenants SET name=COALESCE($1,name), status=COALESCE($2,status), subscription_plan=COALESCE($3,subscription_plan), max_users=COALESCE($4,max_users), max_projects=COALESCE($5,max_projects), updated_at=NOW() WHERE id=$6',
+    [name || null, status || null, subscriptionPlan || null, maxUsers || null, maxProjects || null, tenantId]
   );
   await logAction({ tenantId, userId: me.userId, action: 'UPDATE_TENANT', entityType: 'tenant', entityId: tenantId });
-  return ok(res, { id: tenantId, name: name, subdomain: subdomain, updatedAt: new Date().toISOString() }, 'Tenant updated successfully');
+  return ok(res, { id: tenantId, name: name, updatedAt: new Date().toISOString() }, 'Tenant updated successfully');
 });
 
 // List All Tenants (super_admin only)
@@ -94,10 +88,7 @@ router.get('/', authMiddleware, async (req, res) => {
     );
     return {
       id: t.id, name: t.name, subdomain: t.subdomain, status: t.status,
-      subscriptionPlan: t.subscription_plan,
-      maxUsers: t.max_users,
-      maxProjects: t.max_projects,
-      totalUsers: s.rows[0].total_users,
+      subscriptionPlan: t.subscription_plan, totalUsers: s.rows[0].total_users,
       totalProjects: s.rows[0].total_projects, createdAt: t.created_at,
     };
   }));
@@ -108,3 +99,24 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 export default router;
+
+// Create Tenant (super_admin only)
+router.post('/', authMiddleware, async (req, res) => {
+  const me = req.user;
+  if (me.role !== 'super_admin') return forbidden(res, 'Not super_admin');
+  const { name, subdomain, subscriptionPlan = 'free', status = 'active', maxUsers = undefined, maxProjects = undefined } = req.body || {};
+  if (!name || typeof name !== 'string' || name.trim().length === 0) return badRequest(res, 'Name required');
+  if (!subdomain || !isValidSubdomain(String(subdomain).toLowerCase())) return badRequest(res, 'Invalid subdomain');
+  const exist = await query('SELECT 1 FROM tenants WHERE subdomain=$1', [String(subdomain).toLowerCase()]);
+  if (exist.rowCount) return conflict(res, 'Subdomain already exists');
+  const id = uuidv4();
+  const limits = PLAN_LIMITS[subscriptionPlan] || PLAN_LIMITS['free'];
+  const finalMaxUsers = typeof maxUsers === 'number' ? maxUsers : limits.max_users;
+  const finalMaxProjects = typeof maxProjects === 'number' ? maxProjects : limits.max_projects;
+  await query(
+    'INSERT INTO tenants(id, name, subdomain, status, subscription_plan, max_users, max_projects) VALUES($1,$2,$3,$4,$5,$6,$7)',
+    [id, name, String(subdomain).toLowerCase(), status, subscriptionPlan, finalMaxUsers, finalMaxProjects]
+  );
+  await logAction({ tenantId: id, userId: me.userId, action: 'CREATE_TENANT', entityType: 'tenant', entityId: id });
+  return created(res, { id, name, subdomain: String(subdomain).toLowerCase(), status, subscriptionPlan, maxUsers: finalMaxUsers, maxProjects: finalMaxProjects }, 'Tenant created');
+});
