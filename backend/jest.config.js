@@ -16,4 +16,7 @@ export default {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   verbose: true,
+  testTimeout: 30000,
+  detectOpenHandles: true,
+  forceExit: true,
 };
