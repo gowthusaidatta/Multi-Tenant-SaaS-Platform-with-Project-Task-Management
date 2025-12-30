@@ -10,7 +10,7 @@ import taskRoutes from './routes/tasks.js';
 import healthRoutes from './routes/health.js';
 
 const app = express();
-app.use(cors({ origin: process.env.NODE_ENV === 'production' ? config.corsOrigin : '*', credentials: true }));
+app.use(cors({ origin: config.corsOrigin, credentials: true }));
 app.use(express.json());
 
 app.use('/api/health', healthRoutes);
@@ -22,5 +22,4 @@ app.use('/api', taskRoutes);
 
 app.use(errorHandler);
 
-export { app };
 export default app;

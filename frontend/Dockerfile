@@ -1,23 +1,36 @@
-# Multi-Tenant SaaS Platform - Frontend Dockerfile
-# Production build with optimized static serving
+# Multi-stage build for React frontend
 
-# Build stage
-FROM node:20-alpine as builder
+# Stage 1: Build stage
+FROM node:18-alpine AS builder
+
+# Set environment variables for build
+ENV NODE_ENV=production
+
 WORKDIR /app
-COPY package.json ./
-RUN npm install
-# Copy full project (includes index.html, vite config, envs, src)
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy application code
 COPY . .
+
+# Build the application
 RUN npm run build
 
-# Runtime stage - use lightweight httpserver
-FROM node:20-alpine
-WORKDIR /app
-RUN npm install -g serve
-COPY --from=builder /app/dist ./dist
+# Stage 2: Production stage
+FROM nginx:alpine
 
-# Expose port 3000
+# Copy build artifacts from builder stage
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port
 EXPOSE 3000
 
-# Serve built files without file watching
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

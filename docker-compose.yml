@@ -41,8 +41,8 @@ services:
       # JWT configuration
       JWT_SECRET: supersecret_dev_key_change_me_please_123456  # Change in production
       JWT_EXPIRES_IN: 24h
-      # CORS: Frontend URL uses service name 'frontend', not 'localhost'
-      FRONTEND_URL: http://frontend:3000
+      # CORS: allow browser origin hitting host port 3000
+      FRONTEND_URL: http://localhost:3000
     depends_on:
       database:
         condition: service_healthy  # Wait for database to be ready
@@ -61,8 +61,8 @@ services:
       - "3000:3000"  # Fixed port mapping (external:internal)
     environment:
       # API URL for browser access from host machine
-      VITE_API_URL: http://localhost:5000/api
-      REACT_APP_API_URL: http://localhost:5000/api
+      VITE_API_URL: http://backend:5000/api
+      REACT_APP_API_URL: http://backend:5000/api
     depends_on:
       backend:
         condition: service_healthy  # Wait for backend to be ready

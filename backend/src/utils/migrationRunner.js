@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { query, db } from '../db.js';
+import { query } from '../db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,19 +31,4 @@ export async function runMigrations() {
       throw err;
     }
   }
-}
-
-// If this file is run directly, execute migrations
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runMigrations()
-    .then(() => {
-      console.log('[migrate] All migrations completed successfully');
-      db.end();
-      process.exit(0);
-    })
-    .catch((err) => {
-      console.error('[migrate] Migration failed:', err);
-      db.end();
-      process.exit(1);
-    });
 }

@@ -5,7 +5,7 @@
 
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
-import { unauthorized, forbidden } from '../utils/responses.js';
+import { unauthorized } from '../utils/responses.js';
 
 /**
  * Authentication middleware to verify JWT tokens
@@ -53,13 +53,10 @@ export function authMiddleware(req, res, next) {
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) return unauthorized(res, 'Unauthorized');
-
-    // Super admins can access any route
-    if (req.user.role === 'super_admin') return next();
-
+    
     // Check if user's role is in the allowed roles list
-    if (!roles.includes(req.user.role)) return forbidden(res, 'Insufficient permissions');
-
+    if (!roles.includes(req.user.role)) return unauthorized(res, 'Insufficient permissions');
+    
     next();
   };
 }

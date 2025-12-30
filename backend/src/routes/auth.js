@@ -6,7 +6,7 @@ import { config, PLAN_LIMITS } from '../config.js';
 import { getClient, query } from '../db.js';
 import { ok, created, badRequest, conflict, unauthorized, forbidden, notFound } from '../utils/responses.js';
 import { logAction } from '../utils/logger.js';
-import { isValidSubdomain, isValidEmail, validatePasswordDetailed, isValidFullName } from '../utils/validation.js';
+import { isValidSubdomain, isValidEmail, validatePassword, isValidFullName } from '../utils/validation.js';
 
 const router = Router();
 
@@ -31,7 +31,7 @@ router.post('/register-tenant', async (req, res) => {
   if (!adminPassword) {
     return badRequest(res, 'Password is required');
   }
-  const pwValidation = validatePasswordDetailed(adminPassword);
+  const pwValidation = validatePassword(adminPassword);
   if (!pwValidation.valid) {
     return badRequest(res, pwValidation.error);
   }
@@ -81,6 +81,18 @@ router.post('/register-tenant', async (req, res) => {
   }
 });
 
+function mapTenant(tenantRow) {
+  if (!tenantRow) return null;
+  return {
+    id: tenantRow.id,
+    name: tenantRow.name,
+    subdomain: tenantRow.subdomain,
+    subscriptionPlan: tenantRow.subscription_plan,
+    maxUsers: tenantRow.max_users,
+    maxProjects: tenantRow.max_projects,
+  };
+}
+
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   const { email, password, tenantSubdomain = null, tenantId = null } = req.body || {};
@@ -98,6 +110,7 @@ router.post('/login', async (req, res) => {
     await logAction({ tenantId: null, userId: u.id, action: 'LOGIN', entityType: 'user', entityId: u.id });
     return ok(res, {
       user: { id: u.id, email: email.toLowerCase(), fullName: u.full_name, role: 'super_admin', tenantId: null },
+      tenant: null,
       token, expiresIn: 24 * 60 * 60
     });
   }
@@ -128,6 +141,7 @@ router.post('/login', async (req, res) => {
   await logAction({ tenantId: tenant.id, userId: u.id, action: 'LOGIN', entityType: 'user', entityId: u.id });
   return ok(res, {
     user: { id: u.id, email: email.toLowerCase(), fullName: u.full_name, role: u.role, tenantId: tenant.id },
+    tenant: mapTenant(tenant),
     token, expiresIn: 24 * 60 * 60
   });
 });
@@ -152,10 +166,7 @@ router.get('/me', async (req, res) => {
     const tenant = t.rows[0];
     return ok(res, {
       id: u.id, email: u.email, fullName: u.full_name, role: u.role, isActive: u.is_active,
-      tenant: {
-        id: tenant.id, name: tenant.name, subdomain: tenant.subdomain,
-        subscriptionPlan: tenant.subscription_plan, maxUsers: tenant.max_users, maxProjects: tenant.max_projects
-      }
+      tenant: mapTenant(tenant)
     });
   } catch {
     return unauthorized(res, 'Token invalid or expired');
@@ -165,20 +176,13 @@ router.get('/me', async (req, res) => {
 // POST /api/auth/logout
 router.post('/logout', async (req, res) => {
   const header = req.headers['authorization'] || '';
-  const [scheme, token] = header.split(' ');
-  
-  // Require valid Bearer token
-  if (scheme !== 'Bearer' || !token) {
-    return unauthorized(res, 'Token missing');
-  }
-  
+  const [, token] = header.split(' ');
   try {
-    const payload = jwt.verify(token, config.jwt.secret);
-    await logAction({ tenantId: payload.tenantId || null, userId: payload.userId, action: 'LOGOUT', entityType: 'user', entityId: payload.userId });
-  } catch {
-    return unauthorized(res, 'Token invalid or expired');
-  }
-  
+    if (token) {
+      const payload = jwt.verify(token, config.jwt.secret);
+      await logAction({ tenantId: payload.tenantId || null, userId: payload.userId, action: 'LOGOUT', entityType: 'user', entityId: payload.userId });
+    }
+  } catch {}
   return ok(res, null, 'Logged out successfully');
 });
 
