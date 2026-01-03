@@ -306,10 +306,7 @@ The documentation covers:
 Comprehensive documentation is available in the `docs/` directory:
 
 - **[API Documentation](docs/API.md)** - All 19 API endpoints with examples
-- **[Testing Guide](docs/TESTING.md)** - Automated testing setup and guidelines
-- **[Docker Verification](DOCKER_VERIFICATION.md)** - Complete Docker setup verification
-- **[Docker Reference](DOCKER_REFERENCE.md)** - Docker commands and concepts
-- **[Docker Troubleshooting](DOCKER_TROUBLESHOOTING.md)** - Common issues and solutions
+
 - **[Architecture](docs/architecture.md)** - System architecture and database design
 - **[PRD](docs/PRD.md)** - Product requirements and user personas
 - **[Research](docs/research.md)** - Multi-tenancy analysis and tech stack justification
@@ -351,8 +348,6 @@ npm run test:coverage     # Run with coverage report
 - Automated security audits
 - Docker build verification
 
-See [docs/TESTING.md](docs/TESTING.md) for complete testing documentation.
-
 
 ## Contributing
 
@@ -369,3 +364,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Repository**: https://github.com/gowthusaidatta/Multi-Tenant-SaaS-Platform-with-Project-Task-Management
 
 **Author**: V V Satya Sai Datta Manikanta Gowthu
+
